@@ -1,33 +1,33 @@
 # @minamorl/markdown-next
 
-Markdown parser with AST output, Aozora bunko ruby support, and HTML passthrough.
+A markdown parser that outputs either HTML strings or an AST you can render however you want. Built with [Parsimmon](https://github.com/jneen/parsimmon).
 
-## Features
+What makes it different:
+- **AST output** for React/Vue/custom renderers (not just HTML strings)
+- **Aozora bunko ruby** syntax: `｜漢字《かんじ》`
+- **HTML passthrough**: write `<cite>` or `<ruby>` directly in your markdown
+- **Plugin system**: define custom `@[plugin:args]` blocks
 
-- Standard Markdown: headers, lists, links, images, code blocks, tables, blockquotes
-- **Aozora bunko ruby**: `｜漢字《かんじ》` → `<ruby>漢字<rt>かんじ</rt></ruby>`
-- **HTML passthrough**: `<cite>text</cite>` preserved in output
-- **Plugin system**: Extend with custom `@[plugin:args]` syntax
-- **Dual output**: HTML string or AST (for React/Vue/custom rendering)
-
-## Install
+## Installation
 
 ```bash
 npm install @minamorl/markdown-next
 ```
 
-## Quick Start
+## Basic Usage
+
+The simplest way to get HTML:
 
 ```typescript
 import { parse } from '@minamorl/markdown-next'
 
-const html = parse('# Hello **world**')
-// => '<h1>Hello <strong>world</strong></h1>'
+parse('# Hello **world**')
+// '<h1>Hello <strong>world</strong></h1>'
 ```
 
-## AST Output (for React/Vue/Custom Rendering)
+## Getting an AST Instead
 
-Use `asAST` when you need to render markdown to React, Vue, or any custom format:
+If you're building a React app or need fine-grained control over rendering, use the AST output:
 
 ```typescript
 import { Parser, asAST } from '@minamorl/markdown-next'
@@ -36,7 +36,7 @@ const parser = new Parser({ export: asAST })
 const ast = parser.parse('# Hello **world**')
 ```
 
-### AST Format
+The AST uses a simple tuple format: `[tagName, attributes, children]`
 
 ```typescript
 // Input: '# Hello **world**'
@@ -44,135 +44,168 @@ const ast = parser.parse('# Hello **world**')
 [
   ['h1', null, ['Hello ', ['strong', null, 'world']]]
 ]
-
-// Node structure: [tagName, attributes, children]
-// - tagName: string (e.g., 'h1', 'p', 'strong')
-// - attributes: object | null (e.g., { href: 'url' })
-// - children: string | ASTNode | ASTNode[]
 ```
 
-### React Example
+### Rendering AST in React
+
+Here's a minimal renderer:
 
 ```tsx
-function renderAST(node: ASTNode): React.ReactNode {
+import { Parser, asAST, ASTNode } from '@minamorl/markdown-next'
+
+function renderNode(node: ASTNode, key: number = 0): React.ReactNode {
   if (typeof node === 'string') return node
   if (!Array.isArray(node)) return null
 
   const [tag, attrs, children] = node
-  const props = attrs ? { ...attrs, key: Math.random() } : { key: Math.random() }
 
-  if (tag === 'img' || tag === 'br') {
-    return React.createElement(tag, props)
+  // Self-closing tags
+  if (tag === 'img' || tag === 'br' || tag === 'hr') {
+    return React.createElement(tag, { ...attrs, key })
   }
 
-  const renderedChildren = Array.isArray(children)
-    ? children.map(renderAST)
-    : renderAST(children)
+  // Recursively render children
+  const kids = Array.isArray(children)
+    ? children.map((child, i) => renderNode(child, i))
+    : renderNode(children, 0)
 
-  return React.createElement(tag, props, renderedChildren)
+  return React.createElement(tag, { ...attrs, key }, kids)
 }
 
 // Usage
-const ast = parser.parse(markdown)
-const elements = ast.map(renderAST)
+const parser = new Parser({ export: asAST })
+
+function Markdown({ content }: { content: string }) {
+  const ast = parser.parse(content)
+  return <>{ast.map((node, i) => renderNode(node, i))}</>
+}
 ```
 
-## HTML Output
+## Japanese Ruby Annotations
 
-```typescript
-import { Parser, asHTML, parse } from '@minamorl/markdown-next'
-
-// Shorthand
-const html = parse('**bold**')
-
-// Full control
-const parser = new Parser({ export: asHTML })
-const html = parser.parse('**bold**')
-```
-
-## Aozora Bunko Ruby
-
-Japanese ruby annotation format:
+Supports [Aozora bunko](https://www.aozora.gr.jp/) ruby syntax, commonly used in Japanese publishing:
 
 ```typescript
 parse('｜漢字《かんじ》')
-// => '<p><ruby>漢字<rt>かんじ</rt></ruby></p>'
+// '<p><ruby>漢字<rt>かんじ</rt></ruby></p>'
+
+parse('This is ｜日本語《にほんご》 text')
+// '<p>This is <ruby>日本語<rt>にほんご</rt></ruby> text</p>'
 ```
+
+The `｜` (full-width pipe) marks the start of the base text, and `《》` contains the ruby reading.
 
 ## HTML Passthrough
 
-HTML elements are preserved:
+Sometimes you need HTML that markdown doesn't support. Just write it:
 
 ```typescript
-parse('<cite>Reference</cite>')
-// => '<p><cite>Reference</cite></p>'
+parse('<cite>The Art of Computer Programming</cite>')
+// '<p><cite>The Art of Computer Programming</cite></p>'
 
-parse('<ruby>漢字<rt>かんじ</rt></ruby>')
-// => '<p><ruby>漢字<rt>かんじ</rt></ruby></p>'
+parse('<ruby>東京<rt>とうきょう</rt></ruby>')
+// '<p><ruby>東京<rt>とうきょう</rt></ruby></p>'
+
+parse('<details><summary>Click me</summary>Hidden content</details>')
+// '<p><details><summary>Click me</summary>Hidden content</details></p>'
 ```
 
-## Plugin System
+## Plugins
 
-Extend with custom block or inline plugins:
+Define custom syntax with plugins. Useful for embeds, custom components, or domain-specific markup.
 
 ```typescript
 const parser = new Parser({
   export: asHTML,
   plugins: {
-    note: (args, content, mapper, join) => {
-      return mapper('div', { class: 'note' })(content)
+    youtube: (args) => {
+      return `<iframe src="https://youtube.com/embed/${args}" frameborder="0"></iframe>`
+    },
+    note: (args, content, mapper) => {
+      return mapper('div', { class: `note note-${args || 'info'}` })(content)
     }
   }
 })
 
-// Block plugin
-parser.parse(`
-@[note]
-  This is a note
-`)
-
 // Inline plugin
-parser.parse('Value is @[calc:1+1]')
+parser.parse('Check this video: @[youtube:dQw4w9WgXcQ]')
+
+// Block plugin with content
+parser.parse(`
+@[note:warning]
+  This is important
+`)
 ```
 
-## Supported Elements
+Plugin function signature:
+```typescript
+type Plugin = (
+  args: string,           // Everything after the colon
+  content: Content,       // Parsed content (for block plugins)
+  mapper: ElementMapper,  // Helper to create elements
+  join: JoinFunction      // Helper to join content
+) => string | ASTNode
+```
 
-| Element | Syntax |
-|---------|--------|
-| Headers | `# H1` to `###### H6`, or `H1\n===` / `H2\n---` |
+## Supported Markdown
+
+| Syntax | Example |
+|--------|---------|
+| Headers | `# H1` through `###### H6` |
+| Alt headers | `Header\n===` or `Header\n---` |
 | Bold | `**text**` or `__text__` |
 | Italic | `*text*` or `_text_` |
-| Links | `[label](url)` |
+| Code | `` `inline` `` or fenced blocks |
+| Links | `[text](url)` |
 | Images | `![alt](src)` |
-| Code | `` `inline` `` or ``` ```block``` ``` |
-| Lists | `- item` or `1. item` (nested with 2-space indent) |
-| Blockquote | `> text` (nested with `> > text`) |
-| Table | `\| a \| b \|` format |
-| Ruby | `｜base《ruby》` |
-| HTML | `<tag>content</tag>` |
+| Lists | `- item` or `1. item` |
+| Nested lists | 2-space indent |
+| Blockquotes | `> text` |
+| Tables | `| a | b |` with `|---|---|` separator |
+| Ruby | `｜base《reading》` |
+| HTML | Any valid HTML tag |
 
-## API
+## API Reference
 
 ### `parse(markdown: string): string`
 
-Parse markdown to HTML string.
+Quick function for HTML output.
 
 ### `Parser<T>`
 
 ```typescript
-new Parser({
-  export: asHTML | asAST,  // Output format
-  plugins?: { [name]: Plugin }  // Optional plugins
+const parser = new Parser({
+  export: asHTML,  // or asAST
+  plugins: { ... } // optional
 })
+
+parser.parse(markdown) // returns T (string for asHTML, ASTNode[] for asAST)
 ```
 
-### `asHTML: ExportType<string>`
+### `asHTML`
 
-Export type for HTML string output.
+Export type that produces HTML strings.
 
-### `asAST: ExportType<any>`
+### `asAST`
 
-Export type for AST output.
+Export type that produces an array of AST nodes.
+
+### `ASTNode`
+
+```typescript
+type ASTNode = string | [string, Record<string, string> | null, ASTNode | ASTNode[]]
+```
+
+## Why Another Markdown Parser?
+
+I needed:
+1. Ruby annotation support for Japanese text
+2. AST output for React (not just HTML strings)
+3. Extensibility without forking
+
+Most parsers give you HTML. That's fine until you need to render in React, handle custom components, or process the structure programmatically. The AST output solves this.
+
+The ruby and HTML passthrough features came from working with Japanese content where standard markdown falls short.
 
 ## License
 
