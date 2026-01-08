@@ -229,8 +229,8 @@ class Parser<T> {
         em,
         strong,
         code,
-        htmlElement,
         htmlSelfClosing,
+        htmlElement,
         P.regexp(/[^\r\n<=-\[\]\*\`\@｜]+/),
         P.regexp(/./),
       )
@@ -454,8 +454,8 @@ class Parser<T> {
       em,
       strong,
       code,
-      htmlElement,
       htmlSelfClosing,
+      htmlElement,
       P.regexp(/[^\r\n<｜\[\]\*\`\@]+/),
       P.regexp(/./),
     )
