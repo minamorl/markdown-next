@@ -496,6 +496,31 @@ code block
       assert.deepEqual(parser.parse(input), expect)
 
     })
+    it('should output table with flat tr children (not nested)', () => {
+      const parser = new Parser({
+        export: asAST
+      })
+      const input = `| H1 | H2 |
+| --- | --- |
+| A | B |
+| C | D |`
+      const result = parser.parse(input)
+      // Table should have flat array of tr elements, not nested [[tr], [tr, tr]]
+      const table = result[0]
+      assert.equal(table[0], 'table')
+      const children = table[2]
+      // Should be 3 tr elements (1 header + 2 body rows)
+      assert.equal(children.length, 3)
+      // All children should be tr nodes (not arrays of tr nodes)
+      children.forEach((child: any) => {
+        assert.equal(child[0], 'tr')
+      })
+      // First row should have th cells (header)
+      assert.equal(children[0][2][0][0], 'th')
+      // Second and third rows should have td cells (body)
+      assert.equal(children[1][2][0][0], 'td')
+      assert.equal(children[2][2][0][0], 'td')
+    })
   })
   describe('Extention', () => {
     it('can be extended by user', () => {

@@ -299,12 +299,11 @@ class Parser<T> {
           return P.makeFailure(0, 'No header cells') as any
         }
 
-        return mapper("table")(join([
-          mapper("tr")(join(headerCells.map(h => mapper("th")(parseCellContent(h))))),
-          join(bodyCells.map(row =>
-            mapper("tr")(join(row.map(cell => mapper("td")(parseCellContent(cell)))))
-          ))
-        ]))
+        const headerRow = mapper("tr")(join(headerCells.map(h => mapper("th")(parseCellContent(h)))))
+        const bodyRows = bodyCells.map(row =>
+          mapper("tr")(join(row.map(cell => mapper("td")(parseCellContent(cell)))))
+        )
+        return mapper("table")(join([headerRow, ...bodyRows]))
       }
     )
 
