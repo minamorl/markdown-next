@@ -234,24 +234,78 @@ class Parser<T> {
         P.regexp(/[^\r\n<=-\[\]\*\`\@｜]+/),
         P.regexp(/./),
       )
-    const tdStr = P.regexp(/[^\r\n\[\]\*|`]*(?= \|)/)
-    const tableInline = tdStr
-    const tableStart = P.string("| ")
-    const tableEnd = P.string(" |")
-    const tableSep = P.string(" | ")
-    const tableInner = P.seqMap(tableInline.skip(tableSep).atLeast(1), tableInline, (a, b) => { return [...a, b] })
-    const tableInnerOnlyHeader = P.seqMap(P.regexp(/-+/).skip(tableSep).atLeast(1), P.regexp(/-+/), (a, b) => { return [...a, b] })
-    const tableHeader = tableStart.then(tableInner).skip(tableEnd).skip(linebreak)
-    const tableHSep = tableStart.then(tableInnerOnlyHeader).skip(tableEnd).skip(linebreak)
-    const tableBody = tableStart.then(tableInner).skip(tableEnd.then(linebreak.atMost(1)))
+
+    // Table cell content - supports inline elements
+    const tableCellInline = P.alt(
+      anchor,
+      img,
+      em,
+      strong,
+      code,
+      P.regexp(/[^\r\n\[\]\*|`]+/)
+    )
+
+    // Parse a single table row: |cell|cell|cell| with flexible spacing
+    const parseTableRow = (input: string): string[] => {
+      // Remove leading/trailing pipes and split by pipe
+      const trimmed = input.trim()
+      if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
+        return []
+      }
+      // Remove first and last pipe, split by remaining pipes
+      const inner = trimmed.slice(1, -1)
+      return inner.split('|').map(cell => cell.trim())
+    }
+
+    // Table row regex - matches |...|
+    const tableRowLine = P.regexp(/^\|[^\r\n]+\|/, 0)
+
+    // Separator row pattern - matches |---|---|---| with optional alignment markers
+    const separatorRowPattern = /^\|\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|$/
+
+    // Check if a row is a separator row
+    const isSeparatorRow = (row: string): boolean => {
+      return separatorRowPattern.test(row.trim())
+    }
+
+    // Parse cell content with inline elements
+    const parseCellContent = (content: string): any => {
+      if (!content || content.trim() === '') {
+        return ''
+      }
+      const cellParser = tableCellInline.atLeast(1).map(join)
+      const result = cellParser.parse(content.trim())
+      if (result.status) {
+        return result.value
+      }
+      return content.trim()
+    }
+
+    // Table parser
     const table = P.seqMap(
-      tableHeader,
-      tableHSep,
-      tableBody.atLeast(1),
-      (headers, _1, bodies) => mapper("table")(join([
-        mapper("tr")(join(headers.map(h => mapper("th")(h)))),
-        join(bodies.map(b => mapper("tr")(join(b.map(x => mapper("td")(x))))))
-      ]))
+      tableRowLine.skip(linebreak),
+      tableRowLine.skip(linebreak),
+      tableRowLine.skip(linebreak.atMost(1)).atLeast(0),
+      (headerLine, sepLine, bodyLines) => {
+        // Validate separator row
+        if (!isSeparatorRow(sepLine)) {
+          return P.makeFailure(0, 'Not a valid table separator') as any
+        }
+
+        const headerCells = parseTableRow(headerLine)
+        const bodyCells = bodyLines.map(parseTableRow)
+
+        if (headerCells.length === 0) {
+          return P.makeFailure(0, 'No header cells') as any
+        }
+
+        return mapper("table")(join([
+          mapper("tr")(join(headerCells.map(h => mapper("th")(parseCellContent(h))))),
+          join(bodyCells.map(row =>
+            mapper("tr")(join(row.map(cell => mapper("td")(parseCellContent(cell)))))
+          ))
+        ]))
+      }
     )
 
     const inlines = inline.atLeast(1).map(join)

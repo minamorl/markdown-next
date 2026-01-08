@@ -773,6 +773,250 @@ code block
       })
     })
 
+    describe('Table comprehensive tests', () => {
+      // Basic table parsing
+      it('should parse basic table with spaces', () => {
+        const input = `| a | b | c |
+| --- | --- | --- |
+| 1 | 2 | 3 |`
+        const expect = `<table><tr><th>a</th><th>b</th><th>c</th></tr><tr><td>1</td><td>2</td><td>3</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      it('should parse table without leading/trailing spaces', () => {
+        const input = `|a|b|c|
+|---|---|---|
+|1|2|3|`
+        const expect = `<table><tr><th>a</th><th>b</th><th>c</th></tr><tr><td>1</td><td>2</td><td>3</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      it('should parse table with mixed spacing', () => {
+        const input = `| a |b| c|
+|---|---|---|
+|1 |2| 3|`
+        const expect = `<table><tr><th>a</th><th>b</th><th>c</th></tr><tr><td>1</td><td>2</td><td>3</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      // Single column table
+      it('should parse single column table', () => {
+        const input = `| header |
+| --- |
+| cell |`
+        const expect = `<table><tr><th>header</th></tr><tr><td>cell</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      // Two column table
+      it('should parse two column table', () => {
+        const input = `| a | b |
+| --- | --- |
+| 1 | 2 |`
+        const expect = `<table><tr><th>a</th><th>b</th></tr><tr><td>1</td><td>2</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      // Multiple rows
+      it('should parse table with multiple body rows', () => {
+        const input = `| h1 | h2 |
+| --- | --- |
+| a | b |
+| c | d |
+| e | f |`
+        const expect = `<table><tr><th>h1</th><th>h2</th></tr><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr><tr><td>e</td><td>f</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      // Table alignment markers
+      it('should parse table with left alignment', () => {
+        const input = `| left |
+|:---|
+| text |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      it('should parse table with center alignment', () => {
+        const input = `| center |
+|:---:|
+| text |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      it('should parse table with right alignment', () => {
+        const input = `| right |
+|---:|
+| text |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      it('should parse table with mixed alignment', () => {
+        const input = `| left | center | right |
+|:---|:---:|---:|
+| a | b | c |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      // Inline content in cells
+      it('should parse table with bold in cells', () => {
+        const input = `| **bold** | normal |
+| --- | --- |
+| a | **b** |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('<strong>'))
+      })
+
+      it('should parse table with italic in cells', () => {
+        const input = `| *italic* | normal |
+| --- | --- |
+| a | *b* |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('<em>'))
+      })
+
+      it('should parse table with code in cells', () => {
+        const input = `| \`code\` | normal |
+| --- | --- |
+| a | \`b\` |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('<code>'))
+      })
+
+      it('should parse table with links in cells', () => {
+        const input = `| [link](url) | normal |
+| --- | --- |
+| a | [b](http://example.com) |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('<a href='))
+      })
+
+      // Table at end of file without trailing newline
+      it('should parse table at end of file without trailing newline', () => {
+        const input = `| a | b |
+| --- | --- |
+| 1 | 2 |`
+        const expect = `<table><tr><th>a</th><th>b</th></tr><tr><td>1</td><td>2</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      // Table with trailing newline
+      it('should parse table with trailing newline', () => {
+        const input = `| a | b |
+| --- | --- |
+| 1 | 2 |
+`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      // Table followed by other content
+      it('should parse table followed by paragraph', () => {
+        const input = `| a | b |
+| --- | --- |
+| 1 | 2 |
+
+paragraph after table`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('<p>paragraph'))
+      })
+
+      // Table with Unicode content
+      it('should parse table with Japanese text', () => {
+        const input = `| 名前 | 値 |
+| --- | --- |
+| テスト | 日本語 |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('名前'))
+        assert(result.includes('日本語'))
+      })
+
+      it('should parse table with emoji', () => {
+        const input = `| emoji | desc |
+| --- | --- |
+| 😀 | smile |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+        assert(result.includes('😀'))
+      })
+
+      // Empty cells
+      it('should parse table with all empty cells', () => {
+        const input = `|  |  |
+| --- | --- |
+|  |  |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      // Whitespace in cells
+      it('should handle cells with only whitespace', () => {
+        const input = `| a |   | c |
+| --- | --- | --- |
+| 1 |   | 3 |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      // Long separator
+      it('should parse table with long separator', () => {
+        const input = `| header |
+| -------------- |
+| cell |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      // Minimal separator
+      it('should parse table with minimal separator', () => {
+        const input = `| header |
+| - |
+| cell |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+
+      // Numbers in cells
+      it('should parse table with numeric content', () => {
+        const input = `| num | val |
+| --- | --- |
+| 1 | 100 |
+| 2 | 200 |`
+        const expect = `<table><tr><th>num</th><th>val</th></tr><tr><td>1</td><td>100</td></tr><tr><td>2</td><td>200</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      // Table preceded by other content
+      it('should parse paragraph followed by table', () => {
+        const input = `paragraph before table
+
+| a | b |
+| --- | --- |
+| 1 | 2 |`
+        const result = parse(input)
+        assert(result.includes('<p>paragraph'))
+        assert(result.includes('<table>'))
+      })
+
+      // Complex content
+      it('should parse table with complex header content', () => {
+        const input = `| Header **1** | Header *2* |
+| --- | --- |
+| cell | cell |`
+        const result = parse(input)
+        assert(result.includes('<table>'))
+      })
+    })
+
     describe('Special character combinations', () => {
       it('should handle multiple asterisks', () => {
         const input = `***text***`
