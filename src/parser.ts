@@ -43,7 +43,7 @@ class Parser<T> {
     type: "shadow",
     parent: null
   }
-  acceptables: P.Parser<T>
+  acceptables!: P.Parser<T>
   constructor(public opts: {
     export: ExportType<T>
     plugins?: {[pluginName: string]: Plugin<T>}
@@ -51,17 +51,17 @@ class Parser<T> {
     this.create()
   }
   create() {
-    function flags(re) {
+    function flags(re: RegExp) {
       var s = '' + re;
       return s.slice(s.lastIndexOf('/') + 1);
     }
 
-    function ignore(re, group=0) {
+    function ignore(re: RegExp, group=0) {
       const {makeSuccess, makeFailure} = P as any
 
       const anchored = RegExp('^(?:' + re.source + ')', flags(re));
       const expected = '' + re;
-      return (P as any)(function(input, i) {
+      return (P as any)(function(input: string, i: number) {
         var match = anchored.exec(input.slice(i));
         if (match) {
           var fullMatch = match[0];
@@ -178,14 +178,60 @@ class Parser<T> {
       }
     )
 
+    // Aozora bunko ruby format: ｜text《ruby》
+    const aozoraRuby = P.seqMap(
+      P.string("｜"),
+      P.regexp(/[^《]+/),
+      P.string("《"),
+      P.regexp(/[^》]+/),
+      P.string("》"),
+      (_pipe, base, _open, ruby, _close) => {
+        return mapper("ruby")(join([base, mapper("rt")(ruby)]))
+      }
+    )
+
+    // HTML element parser - converts <tag>content</tag> to AST format
+    const htmlSelfClosing = P.regexp(/<(br|hr)\s*\/?>/).map((match) => {
+      const tag = match.match(/<(\w+)/)?.[1] || 'br'
+      return mapper(tag)(null)
+    })
+
+    const htmlElement: P.Parser<T> = P.lazy(() => {
+      // Match opening tag with optional attributes
+      const openTag = P.regexp(/<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^>]*)?)>/, 1)
+      // Content can include nested HTML elements or text
+      const content = P.alt(
+        htmlElement,
+        htmlSelfClosing,
+        P.regexp(/[^<]+/)
+      ).many()
+
+      return P.seqMap(
+        openTag,
+        P.index,
+        content,
+        P.regexp(/<\/([a-zA-Z][a-zA-Z0-9]*)>/, 1),
+        (tag, _idx, children, closeTag) => {
+          if (tag.toLowerCase() !== closeTag.toLowerCase()) {
+            // Mismatched tags - return as text
+            return join(['<' + tag + '>', ...children, '</' + closeTag + '>'])
+          }
+          return mapper(tag)(join(children))
+        }
+      )
+    })
+
     const inline = P.alt(
         pluginInline,
+        aozoraRuby,
         anchor,
         img,
         em,
         strong,
         code,
-        P.regexp(/[^\r\n=-\[\]\*\`\@]+/),
+        htmlElement,
+        htmlSelfClosing,
+        P.regexp(/[^\r\n<=-\[\]\*\`\@｜]+/),
         P.regexp(/./),
       )
     const tdStr = P.regexp(/[^\r\n\[\]\*|`]*(?= \|)/)
@@ -211,14 +257,14 @@ class Parser<T> {
     const inlines = inline.atLeast(1).map(join)
     const paragraphBegin = inlines
     const paragraphEnd = ignore(/```\n.*\n```/)
-    const paragraphLine = P.lazy(() => P.alt(
+    const paragraphLine: P.Parser<T> = P.lazy(() => P.alt(
       P.seq(
         paragraphBegin,
         linebreak.skip(paragraphEnd).result(mapper("br")(null)),
         paragraphLine
       ).map(join),
       inlines
-    ))
+    )) as P.Parser<T>
     const paragraph = paragraphLine
         .map(mapper("p"))
 
@@ -311,7 +357,7 @@ class Parser<T> {
     })
 
 
-    const treeToHtml = (treeOrNode: ListTree) => {
+    const treeToHtml = (treeOrNode: ListTree): T => {
       if(treeOrNode.type === "shadow") {
         return join(treeOrNode.children.map(treeToHtml))
       } else if(treeOrNode.children.length === 0 && treeOrNode.value !== null) {
@@ -344,14 +390,28 @@ class Parser<T> {
           return mapper("pre", { "data-language": definition})(mapper("code")(join(code)))
         })
 
-    const blockquoteStr = P.regexp(/[^\r\n]+/)
     const blockquoteBegin = P.string("> ")
-    
+    // Parse blockquote content using inlines to support HTML tags and ruby
+    const blockquoteInline = P.alt(
+      pluginInline,
+      aozoraRuby,
+      anchor,
+      img,
+      em,
+      strong,
+      code,
+      htmlElement,
+      htmlSelfClosing,
+      P.regexp(/[^\r\n<｜\[\]\*\`\@]+/),
+      P.regexp(/./),
+    )
+    const blockquoteContent = blockquoteInline.atLeast(1).map(join)
+
     const blockquoteLine = P.lazy(() => {
       let blockquoteLevel: number = 0
       return P.seqMap(
         blockquoteBegin.then(blockquoteBegin.many().map(x => blockquoteLevel = x.length)),
-        blockquoteStr,
+        blockquoteContent,
         linebreak.atMost(1),
         (_1, text, _2) => {
           return {text, blockquoteLevel}
@@ -359,12 +419,12 @@ class Parser<T> {
       )
     })
     interface IBlockquoteVertex {
-      text: string | null
+      text: unknown
       children: IBlockquoteVertex[]
       parent?: IBlockquoteVertex
     }
-    
-    const createBlockquoteTree = (x: {text: string, blockquoteLevel: number}[]) => {
+
+    const createBlockquoteTree = (x: {text: unknown, blockquoteLevel: number}[]) => {
       let depth = 0
       let root: IBlockquoteVertex = {text: null, children: []}
       let currentNode = root
@@ -398,7 +458,7 @@ class Parser<T> {
       let result: any[] = []
       for (const [i, v] of tree.children.entries()) {
         if (v.text !== null) {
-          if (tree.children[i + 1] && typeof tree.children[i + 1].text === "string") {
+          if (tree.children[i + 1] && tree.children[i + 1].text !== null) {
             result.push(join([v.text, mapper("br")(null)]))
           } else {
             result.push(v.text)
@@ -487,8 +547,8 @@ export const asHTML: ExportType<string> = {
     args  ? " " + Object.keys(args).map(x => `${x}="${escapeHtml(String(args[x]))}"`).join(" ") : "",
     children !== null && children !== "" ? ">" + children + "</" + tag + ">" : " />"
   ].join(""),
-  join: x => x.join(""),
-  postprocess: x => x
+  join: (x: string[]) => x.join(""),
+  postprocess: (x: string) => x
 }
 
 export const asAST: ExportType<any> = {
@@ -497,9 +557,9 @@ export const asAST: ExportType<any> = {
     args ? args : null,
     children
   ],
-  join: x => x, // identical
+  join: (x: any) => x, // identical
   postprocess: (obj: Array<any>) => {
-    return obj.filter(x => (x !== ''))
+    return obj.filter((x: any) => (x !== ''))
   }
 }
 

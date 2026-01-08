@@ -1,18 +1,12 @@
-name: CI
+name: Publish to npm
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  release:
+    types: [created]
 
 jobs:
-  test:
+  publish:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -22,10 +16,11 @@ jobs:
       with:
         version: 10
 
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '20.x'
+        registry-url: 'https://registry.npmjs.org'
         cache: 'pnpm'
 
     - name: Install dependencies
@@ -33,3 +28,8 @@ jobs:
 
     - name: Run tests
       run: pnpm test
+
+    - name: Publish to npm
+      run: pnpm publish --access public --no-git-checks
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

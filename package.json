@@ -1,13 +1,13 @@
 {
-  "name": "markdown-next",
-  "description": "markdown-next parser for javascript",
+  "name": "@minamorl/markdown-next",
+  "description": "Markdown parser with Aozora bunko ruby support and HTML passthrough",
   "main": "./lib/src/parser.js",
   "types": "./lib/src/parser.d.ts",
   "scripts": {
     "build": "tsc",
     "example": "cd examples && webpack",
-    "prepublish": "npm run build",
-    "test": "npm run build && mocha lib/test"
+    "prepublish": "pnpm run build",
+    "test": "pnpm run build && mocha lib/test"
   },
   "author": "minamorl",
   "license": "MIT",
@@ -30,11 +30,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sketchglass/markdown-next.git"
+    "url": "git+https://github.com/minamorl/markdown-next.git"
   },
   "bugs": {
-    "url": "https://github.com/sketchglass/markdown-next/issues"
+    "url": "https://github.com/minamorl/markdown-next/issues"
   },
-  "homepage": "https://github.com/sketchglass/markdown-next#readme",
-  "version": "1.2.0"
+  "homepage": "https://github.com/minamorl/markdown-next#readme",
+  "version": "2.0.0"
 }
