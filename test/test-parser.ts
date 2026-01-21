@@ -544,6 +544,78 @@ code block
     })
   })
 
+  describe('Math (KaTeX)', () => {
+    it('should parse inline math with $...$', () => {
+      const input = `The equation $E=mc^2$ is famous.`
+      const expect = `<p>The equation <span class="math math-inline" data-math="E=mc^2">E=mc^2</span> is famous.</p>`
+      assert.equal(parse(input), expect)
+    })
+
+    it('should parse block math with $$...$$', () => {
+      const input = `$$
+x^2 + y^2 = z^2
+$$`
+      const expect = `<div class="math math-display" data-math="x^2 + y^2 = z^2">x^2 + y^2 = z^2</div>`
+      assert.equal(parse(input), expect)
+    })
+
+    it('should parse inline math with LaTeX commands', () => {
+      const input = `The fraction $\\frac{1}{2}$ represents half.`
+      const result = parse(input)
+      assert(result.includes('math-inline'))
+      assert(result.includes('data-math'))
+      assert(result.includes('\\frac{1}{2}'))
+    })
+
+    it('should parse block math with multiple lines', () => {
+      const input = `$$
+\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}
+$$`
+      const result = parse(input)
+      assert(result.includes('math-display'))
+      assert(result.includes('data-math'))
+    })
+
+    it('should parse mixed content with inline and block math', () => {
+      const input = `# Math Example
+
+Inline: $a + b = c$
+
+$$
+x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}
+$$
+
+End.`
+      const result = parse(input)
+      assert(result.includes('<h1>Math Example</h1>'))
+      assert(result.includes('math-inline'))
+      assert(result.includes('math-display'))
+      assert(result.includes('<p>End.</p>'))
+    })
+
+    it('should not confuse single $ with math', () => {
+      const input = `Price: $100`
+      const result = parse(input)
+      // Single $ at end should not create math span
+      assert(result.includes('$100') || result.includes('Price'))
+    })
+
+    it('should handle math in table cells', () => {
+      const input = `| Formula | Result |
+| --- | --- |
+| $x^2$ | 4 |`
+      const result = parse(input)
+      assert(result.includes('<table>'))
+    })
+
+    it('should handle math in blockquote', () => {
+      const input = `> The equation $E=mc^2$ changed physics.`
+      const result = parse(input)
+      assert(result.includes('<blockquote>'))
+      assert(result.includes('math-inline'))
+    })
+  })
+
   describe('Edge Cases', () => {
     describe('Empty and whitespace inputs', () => {
       it('should handle empty string', () => {

@@ -221,6 +221,17 @@ class Parser<T> {
       )
     })
 
+        // Math expressions (KaTeX-compatible)
+    // Inline math: $...$
+    const mathInline = P.seqMap(
+      P.string("$").notFollowedBy(P.string("$")),
+      P.regexp(/[^\$\r\n]+/),
+      P.string("$"),
+      (_1, content, _3) => {
+        return mapper("span", { class: "math math-inline", "data-math": content })(content)
+      }
+    )
+
     const inline = P.alt(
         pluginInline,
         aozoraRuby,
@@ -229,9 +240,10 @@ class Parser<T> {
         em,
         strong,
         code,
+        mathInline,
         htmlSelfClosing,
         htmlElement,
-        P.regexp(/[^\r\n<=-\[\]\*\`\@｜]+/),
+        P.regexp(/[^\r\n<=-\[\]\*\`\@｜\$]+/),
         P.regexp(/./),
       )
 
@@ -444,7 +456,7 @@ class Parser<T> {
         })
 
     const blockquoteBegin = P.string("> ")
-    // Parse blockquote content using inlines to support HTML tags and ruby
+    // Parse blockquote content using inlines to support HTML tags, ruby, and math
     const blockquoteInline = P.alt(
       pluginInline,
       aozoraRuby,
@@ -453,9 +465,10 @@ class Parser<T> {
       em,
       strong,
       code,
+      mathInline,
       htmlSelfClosing,
       htmlElement,
-      P.regexp(/[^\r\n<｜\[\]\*\`\@]+/),
+      P.regexp(/[^\r\n<｜\[\]\*\`\@\$]+/),
       P.regexp(/./),
     )
     const blockquoteContent = blockquoteInline.atLeast(1).map(join)
@@ -543,6 +556,20 @@ class Parser<T> {
           : join([_1, pluginName, args, _2, content])
       }
     )
+    // Block math: $$...$$ (must be on its own line or surrounded by newlines)
+    const mathBlockContent = P.regexp(/[^\$]+/)
+    const mathBlock = P.seqMap(
+      P.regexp(/^\$\$/),
+      P.regexp(/\n?/),
+      mathBlockContent,
+      P.regexp(/\n?/),
+      P.string("$$"),
+      P.alt(linebreak, P.eof),
+      (_1, _2, content, _4, _5, _6) => {
+        return mapper("div", { class: "math math-display", "data-math": content.trim() })(content.trim())
+      }
+    )
+
     const block = P.alt(
       P.regexp(/\s+/).result(""),
       pluginBlock,
@@ -556,6 +583,7 @@ class Parser<T> {
       h1,
       table,
       codeBlock,
+      mathBlock,
       lists,
       blockquote,
       paragraph,
