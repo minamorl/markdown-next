@@ -334,7 +334,18 @@ class Parser<T> {
         .map(mapper("p"))
 
     const listIndent = P.string("  ")
-    const liSingleLine = P.regexp(/[^`\r\n]*/)
+    // List item content - supports inline elements including math
+    const liInlineContent = P.alt(
+      mathInline,
+      anchor,
+      img,
+      em,
+      strong,
+      code,
+      P.regexp(/[^\r\n\[\]\*\`\$]+/),
+      P.regexp(/./),
+    )
+    const liSingleLine = liInlineContent.atLeast(0).map(join)
 
     const ulStart = P.string("- ").or(P.string("* "))
     const olStart =  P.regexp(/[0-9]+\. /)
@@ -379,7 +390,7 @@ class Parser<T> {
         const liLevelCurrent = liLevel[v.counter]
         if(liLevelBefore === liLevelCurrent) {
           this.currentTree.children.push({
-            value: v.str,
+            value: v.str as string | null,
             children: [],
             type: v.nodeType,
             parent: this.currentTree
@@ -391,7 +402,7 @@ class Parser<T> {
             children: [],
             type: v.nodeType,
             parent: this.currentTree,
-            value: v.str
+            value: v.str as string | null
           })
         } else if(liLevelBefore > liLevelCurrent) {
           const unindetationStep = (liLevelBefore - liLevelCurrent) / 2
@@ -404,7 +415,7 @@ class Parser<T> {
             type: v.nodeType,
             children: [],
             parent: this.currentTree,
-            value: v.str
+            value: v.str as string | null
           })
         }
         const _nodeType = v.nodeType
@@ -557,15 +568,14 @@ class Parser<T> {
       }
     )
     // Block math: $$...$$ (must be on its own line or surrounded by newlines)
-    const mathBlockContent = P.regexp(/[^\$]+/)
+    // Content can include anything except $$ (including single $, newlines, etc.)
+    const mathBlockContent = P.regexp(/[\s\S]*?(?=\$\$)/)
     const mathBlock = P.seqMap(
       P.regexp(/^\$\$/),
-      P.regexp(/\n?/),
       mathBlockContent,
-      P.regexp(/\n?/),
       P.string("$$"),
       P.alt(linebreak, P.eof),
-      (_1, _2, content, _4, _5, _6) => {
+      (_1, content, _3, _4) => {
         return mapper("div", { class: "math math-display", "data-math": content.trim() })(content.trim())
       }
     )
