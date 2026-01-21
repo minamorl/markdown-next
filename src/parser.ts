@@ -221,14 +221,15 @@ class Parser<T> {
       )
     })
 
-        // Math expressions (KaTeX-compatible)
+        // Math expressions - output raw $...$ for MathJax to process
     // Inline math: $...$
     const mathInline = P.seqMap(
       P.string("$").notFollowedBy(P.string("$")),
       P.regexp(/[^\$\r\n]+/),
       P.string("$"),
       (_1, content, _3) => {
-        return mapper("span", { class: "math math-inline", "data-math": content })(content)
+        // Output raw $...$ for MathJax auto-detection
+        return "$" + content + "$"
       }
     )
 
@@ -576,7 +577,8 @@ class Parser<T> {
       P.string("$$"),
       P.alt(linebreak, P.eof),
       (_1, content, _3, _4) => {
-        return mapper("div", { class: "math math-display", "data-math": content.trim() })(content.trim())
+        // Output raw $$...$$ for MathJax auto-detection
+        return "$$" + content.trim() + "$$"
       }
     )
 

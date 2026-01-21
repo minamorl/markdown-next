@@ -544,36 +544,34 @@ code block
     })
   })
 
-  describe('Math (KaTeX)', () => {
-    it('should parse inline math with $...$', () => {
+  describe('Math (MathJax auto-detection)', () => {
+    it('should output raw inline math with $...$', () => {
       const input = `The equation $E=mc^2$ is famous.`
-      const expect = `<p>The equation <span class="math math-inline" data-math="E=mc^2">E=mc^2</span> is famous.</p>`
+      const expect = `<p>The equation $E=mc^2$ is famous.</p>`
       assert.equal(parse(input), expect)
     })
 
-    it('should parse block math with $$...$$', () => {
+    it('should output raw block math with $$...$$', () => {
       const input = `$$
 x^2 + y^2 = z^2
 $$`
-      const expect = `<div class="math math-display" data-math="x^2 + y^2 = z^2">x^2 + y^2 = z^2</div>`
+      const expect = `$$x^2 + y^2 = z^2$$`
       assert.equal(parse(input), expect)
     })
 
-    it('should parse inline math with LaTeX commands', () => {
+    it('should preserve inline math with LaTeX commands', () => {
       const input = `The fraction $\\frac{1}{2}$ represents half.`
       const result = parse(input)
-      assert(result.includes('math-inline'))
-      assert(result.includes('data-math'))
-      assert(result.includes('\\frac{1}{2}'))
+      assert(result.includes('$\\frac{1}{2}$'))
     })
 
-    it('should parse block math with multiple lines', () => {
+    it('should preserve block math with multiple lines', () => {
       const input = `$$
 \\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}
 $$`
       const result = parse(input)
-      assert(result.includes('math-display'))
-      assert(result.includes('data-math'))
+      assert(result.includes('$$'))
+      assert(result.includes('\\int_0^\\infty'))
     })
 
     it('should parse mixed content with inline and block math', () => {
@@ -588,8 +586,8 @@ $$
 End.`
       const result = parse(input)
       assert(result.includes('<h1>Math Example</h1>'))
-      assert(result.includes('math-inline'))
-      assert(result.includes('math-display'))
+      assert(result.includes('$a + b = c$'))
+      assert(result.includes('$$'))
       assert(result.includes('<p>End.</p>'))
     })
 
@@ -612,7 +610,7 @@ End.`
       const input = `> The equation $E=mc^2$ changed physics.`
       const result = parse(input)
       assert(result.includes('<blockquote>'))
-      assert(result.includes('math-inline'))
+      assert(result.includes('$E=mc^2$'))
     })
   })
 
