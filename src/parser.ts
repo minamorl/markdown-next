@@ -1,4 +1,4 @@
-import P = require("parsimmon")
+import P = require('parsimmon')
 
 interface IndexType {
   offset: number
@@ -6,187 +6,153 @@ interface IndexType {
   column: number
 }
 
-export
-interface ListTree {
-  type: "ul" | "ol" | "shadow"
+export interface ListTree {
+  type: 'ul' | 'ol' | 'shadow'
   children: Array<ListTree>
   value: string | null
   parent: ListTree | null
 }
 
-export
-type Plugin<T> = (args: string, content: any, mapper: Mapper<T>, join: Function) => string
+export type Plugin<T> = (args: string, content: any, mapper: Mapper<T>, join: Function) => string
 
-export
-type Mapper<T> = (tagName: string, attributes?: any) => (children: string | T | null) => T
+export type Mapper<T> = (tagName: string, attributes?: any) => (children: string | T | null) => T
 
-export
-interface ExportType<T> {
+export interface ExportType<T> {
   mapper: Mapper<T>
-  join:  Function
+  join: Function
   postprocess: (x: any) => any
 }
 
-export
-class Parser<T> {
+export class Parser<T> {
   liLevelBefore: number | null = null
   liLevel: number | null = null
   rootTree: ListTree = {
     value: null,
     children: [],
-    type: "shadow",
-    parent: null
+    type: 'shadow',
+    parent: null,
   }
   currentTree: ListTree = {
     value: null,
     children: [],
-    type: "shadow",
-    parent: null
+    type: 'shadow',
+    parent: null,
   }
   acceptables!: P.Parser<T>
-  constructor(public opts: {
-    export: ExportType<T>
-    plugins?: {[pluginName: string]: Plugin<T>}
-  }) {
+  constructor(
+    public opts: {
+      export: ExportType<T>
+      plugins?: { [pluginName: string]: Plugin<T> }
+    }
+  ) {
     this.create()
   }
   create() {
     function flags(re: RegExp) {
-      var s = '' + re;
-      return s.slice(s.lastIndexOf('/') + 1);
+      var s = '' + re
+      return s.slice(s.lastIndexOf('/') + 1)
     }
 
-    function ignore(re: RegExp, group=0) {
-      const {makeSuccess, makeFailure} = P as any
+    function ignore(re: RegExp, group = 0) {
+      const { makeSuccess, makeFailure } = P as any
 
-      const anchored = RegExp('^(?:' + re.source + ')', flags(re));
-      const expected = '' + re;
-      return (P as any)(function(input: string, i: number) {
-        var match = anchored.exec(input.slice(i));
+      const anchored = RegExp('^(?:' + re.source + ')', flags(re))
+      const expected = '' + re
+      return (P as any)(function (input: string, i: number) {
+        var match = anchored.exec(input.slice(i))
         if (match) {
-          var fullMatch = match[0];
-          var groupMatch = match[group];
+          var fullMatch = match[0]
+          var groupMatch = match[group]
           if (groupMatch != null) {
-            return makeFailure(i + fullMatch.length, groupMatch);
+            return makeFailure(i + fullMatch.length, groupMatch)
           }
         }
-        return makeSuccess(i, expected);
-      });
+        return makeSuccess(i, expected)
+      })
     }
 
     const whitespace = P.regexp(/\s+/m)
-    const asterisk = P.string("*")
-    const sharp = P.string("#")
+    const asterisk = P.string('*')
+    const sharp = P.string('#')
     const plainStr = P.regexp(/[^`_\*\r\n]+/)
     const codePlainStr = P.regexp(/[^`\r\n]+/)
-    const linebreak = P.string("\r\n").or(P.string("\n")).or(P.string("\r"))
-    const equal = P.string("=")
-    const minus = P.string("-")
+    const linebreak = P.string('\r\n').or(P.string('\n')).or(P.string('\r'))
+    const equal = P.string('=')
+    const minus = P.string('-')
 
-
-    const join:any = this.opts.export.join
+    const join: any = this.opts.export.join
     const mapper = this.opts.export.mapper
     const token = (p: P.Parser<any>) => {
       return p.skip(P.regexp(/\s*/m))
     }
     const h1Special = P.regexp(/^(.*)\n\=+/, 1)
-      .skip(P.alt(
-        P.eof,
-        P.string("\n")
-      ))
-      .map(mapper("h1"))
+      .skip(P.alt(P.eof, P.string('\n')))
+      .map(mapper('h1'))
     const h2Special = P.regexp(/^(.*)\n\-+/, 1)
-      .skip(P.alt(
-        P.eof,
-        P.string("\n")
-      ))
-      .map(mapper("h2"))
-    const h1 = token(P.seq(
-        sharp,
-        whitespace,
-      ).then(plainStr)).map(mapper("h1"))
-    const h2 = token(P.seq(
-        sharp.times(2),
-        whitespace,
-      ).then(plainStr)).map(mapper("h2"))
-    const h3 = token(P.seq(
-        sharp.times(3),
-        whitespace,
-      ).then(plainStr)).map(mapper("h3"))
-    const h4 = token(P.seq(
-        sharp.times(4),
-        whitespace,
-      ).then(plainStr)).map(mapper("h4"))
-    const h5 = token(P.seq(
-        sharp.times(5),
-        whitespace,
-      ).then(plainStr)).map(mapper("h5"))
-    const h6 = token(P.seq(
-        sharp.times(6),
-        whitespace,
-      ).then(plainStr)).map(mapper("h6"))
+      .skip(P.alt(P.eof, P.string('\n')))
+      .map(mapper('h2'))
+    const h1 = token(P.seq(sharp, whitespace).then(plainStr)).map(mapper('h1'))
+    const h2 = token(P.seq(sharp.times(2), whitespace).then(plainStr)).map(mapper('h2'))
+    const h3 = token(P.seq(sharp.times(3), whitespace).then(plainStr)).map(mapper('h3'))
+    const h4 = token(P.seq(sharp.times(4), whitespace).then(plainStr)).map(mapper('h4'))
+    const h5 = token(P.seq(sharp.times(5), whitespace).then(plainStr)).map(mapper('h5'))
+    const h6 = token(P.seq(sharp.times(6), whitespace).then(plainStr)).map(mapper('h6'))
 
-    const strongStart = P.string("**").or(P.string("__"))
+    const strongStart = P.string('**').or(P.string('__'))
     const strongEnd = strongStart
-    const strong = strongStart
-      .then(plainStr)
-      .map(mapper("strong"))
-      .skip(strongEnd)
+    const strong = strongStart.then(plainStr).map(mapper('strong')).skip(strongEnd)
 
-    const emStart = P.string("*").or(P.string("_"))
+    const emStart = P.string('*').or(P.string('_'))
     const emEnd = emStart
-    const em = emStart
-      .then(plainStr)
-      .map(mapper("em"))
-      .skip(emEnd)
+    const em = emStart.then(plainStr).map(mapper('em')).skip(emEnd)
 
     const anchor = P.seqMap(
-      P.string("["),
+      P.string('['),
       P.regexp(/[^\]\r\n]+/),
-      P.string("]("),
+      P.string(']('),
       P.regexp(/[^\)\r\n]+/),
-      P.string(")"),
+      P.string(')'),
       (_1, label, _2, href, _3) => {
-        return mapper("a", {href})(label)
-      })
+        return mapper('a', { href })(label)
+      }
+    )
 
     const img = P.seqMap(
-      P.string("!["),
+      P.string('!['),
       P.regexp(/[^\]\r\n]+/),
-      P.string("]("),
+      P.string(']('),
       P.regexp(/[^\)\r\n]+/),
-      P.string(")"),
+      P.string(')'),
       (_1, alt, _2, src, _3) => {
-        return mapper("img", {src, alt})(null)
-      })
+        return mapper('img', { src, alt })(null)
+      }
+    )
 
-    const codeStart = P.string("`")
-    const codeEnd = P.string("`")
-    const code = codeStart
-      .then(codePlainStr)
-      .map(mapper("code"))
-      .skip(codeEnd)
+    const codeStart = P.string('`')
+    const codeEnd = P.string('`')
+    const code = codeStart.then(codePlainStr).map(mapper('code')).skip(codeEnd)
 
     const pluginInline = P.seqMap(
-      P.string("@["),
+      P.string('@['),
       P.regexp(/[a-zA-Z]+/),
       P.regexp(/:{0,1}([^\]]*)/, 1),
-      P.string("]"),
+      P.string(']'),
       (_1, pluginName, args, _2) => {
-        return this.opts.plugins && this.opts.plugins[pluginName] ?
-          this.opts.plugins[pluginName](args, null, mapper, join) : join([_1, pluginName, args, _2])
+        return this.opts.plugins && this.opts.plugins[pluginName]
+          ? this.opts.plugins[pluginName](args, null, mapper, join)
+          : join([_1, pluginName, args, _2])
       }
     )
 
     // Aozora bunko ruby format: ｜text《ruby》
     const aozoraRuby = P.seqMap(
-      P.string("｜"),
+      P.string('｜'),
       P.regexp(/[^《]+/),
-      P.string("《"),
+      P.string('《'),
       P.regexp(/[^》]+/),
-      P.string("》"),
+      P.string('》'),
       (_pipe, base, _open, ruby, _close) => {
-        return mapper("ruby")(join([base, mapper("rt")(ruby)]))
+        return mapper('ruby')(join([base, mapper('rt')(ruby)]))
       }
     )
 
@@ -200,11 +166,7 @@ class Parser<T> {
       // Match opening tag with optional attributes
       const openTag = P.regexp(/<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^>]*)?)>/, 1)
       // Content can include nested HTML elements or text
-      const content = P.alt(
-        htmlElement,
-        htmlSelfClosing,
-        P.regexp(/[^<]+/)
-      ).many()
+      const content = P.alt(htmlElement, htmlSelfClosing, P.regexp(/[^<]+/)).many()
 
       return P.seqMap(
         openTag,
@@ -221,42 +183,46 @@ class Parser<T> {
       )
     })
 
-        // Math expressions - output raw $...$ for MathJax to process
+    // Footnote reference: [^1], [^2], etc.
+    const footnoteRef = P.seqMap(
+      P.string('[^'),
+      P.regexp(/[0-9]+/),
+      P.string(']').notFollowedBy(P.string(':')),
+      (_1, num, _3) => {
+        return mapper('footnote-ref', { id: num })(num)
+      }
+    )
+
+    // Math expressions - output raw $...$ for MathJax to process
     // Inline math: $...$
     const mathInline = P.seqMap(
-      P.string("$").notFollowedBy(P.string("$")),
+      P.string('$').notFollowedBy(P.string('$')),
       P.regexp(/[^\$\r\n]+/),
-      P.string("$"),
+      P.string('$'),
       (_1, content, _3) => {
         // Output raw $...$ for MathJax auto-detection
-        return "$" + content + "$"
+        return '$' + content + '$'
       }
     )
 
     const inline = P.alt(
-        pluginInline,
-        aozoraRuby,
-        anchor,
-        img,
-        em,
-        strong,
-        code,
-        mathInline,
-        htmlSelfClosing,
-        htmlElement,
-        P.regexp(/[^\r\n<=-\[\]\*\`\@｜\$]+/),
-        P.regexp(/./),
-      )
-
-    // Table cell content - supports inline elements
-    const tableCellInline = P.alt(
+      pluginInline,
+      aozoraRuby,
+      footnoteRef,
       anchor,
       img,
       em,
       strong,
       code,
-      P.regexp(/[^\r\n\[\]\*|`]+/)
+      mathInline,
+      htmlSelfClosing,
+      htmlElement,
+      P.regexp(/[^\r\n<=-\[\]\*\`\@｜\$]+/),
+      P.regexp(/./)
     )
+
+    // Table cell content - supports inline elements
+    const tableCellInline = P.alt(anchor, img, em, strong, code, P.regexp(/[^\r\n\[\]\*|`]+/))
 
     // Parse a single table row: |cell|cell|cell| with flexible spacing
     const parseTableRow = (input: string): string[] => {
@@ -267,7 +233,7 @@ class Parser<T> {
       }
       // Remove first and last pipe, split by remaining pipes
       const inner = trimmed.slice(1, -1)
-      return inner.split('|').map(cell => cell.trim())
+      return inner.split('|').map((cell) => cell.trim())
     }
 
     // Table row regex - matches |...|
@@ -312,29 +278,26 @@ class Parser<T> {
           return P.makeFailure(0, 'No header cells') as any
         }
 
-        const headerRow = mapper("tr")(join(headerCells.map(h => mapper("th")(parseCellContent(h)))))
-        const bodyRows = bodyCells.map(row =>
-          mapper("tr")(join(row.map(cell => mapper("td")(parseCellContent(cell)))))
+        const headerRow = mapper('tr')(join(headerCells.map((h) => mapper('th')(parseCellContent(h)))))
+        const bodyRows = bodyCells.map((row) =>
+          mapper('tr')(join(row.map((cell) => mapper('td')(parseCellContent(cell)))))
         )
-        return mapper("table")(join([headerRow, ...bodyRows]))
+        return mapper('table')(join([headerRow, ...bodyRows]))
       }
     )
 
     const inlines = inline.atLeast(1).map(join)
     const paragraphBegin = inlines
     const paragraphEnd = ignore(/```\n.*\n```/)
-    const paragraphLine: P.Parser<T> = P.lazy(() => P.alt(
-      P.seq(
-        paragraphBegin,
-        linebreak.skip(paragraphEnd).result(mapper("br")(null)),
-        paragraphLine
-      ).map(join),
-      inlines
-    )) as P.Parser<T>
-    const paragraph = paragraphLine
-        .map(mapper("p"))
+    const paragraphLine: P.Parser<T> = P.lazy(() =>
+      P.alt(
+        P.seq(paragraphBegin, linebreak.skip(paragraphEnd).result(mapper('br')(null)), paragraphLine).map(join),
+        inlines
+      )
+    ) as P.Parser<T>
+    const paragraph = paragraphLine.map(mapper('p'))
 
-    const listIndent = P.string("  ")
+    const listIndent = P.string('  ')
     // List item content - supports inline elements including math
     const liInlineContent = P.alt(
       mathInline,
@@ -344,12 +307,12 @@ class Parser<T> {
       strong,
       code,
       P.regexp(/[^\r\n\[\]\*\`\$]+/),
-      P.regexp(/./),
+      P.regexp(/./)
     )
     const liSingleLine = liInlineContent.atLeast(0).map(join)
 
-    const ulStart = P.string("- ").or(P.string("* "))
-    const olStart =  P.regexp(/[0-9]+\. /)
+    const ulStart = P.string('- ').or(P.string('* '))
+    const olStart = P.regexp(/[0-9]+\. /)
 
     let liLevel: number[] = [1]
     let counter: number = 0
@@ -357,93 +320,90 @@ class Parser<T> {
       this.rootTree = this.currentTree = {
         value: null,
         children: [],
-        type: "shadow",
-        parent: null
+        type: 'shadow',
+        parent: null,
       }
       liLevel = [1]
       counter = 0
     }
     const listLineContent = () => {
-      return P.seqMap(
-        listIndent.many(),
-        P.index,
-        ulStart.or(olStart),
-        liSingleLine,
-        (_1, index, start, str) => {
-          let nodeType: "ul" | "ol"
-          // detect which types of content
-          liLevel.push(index.column)
-          nodeType = ((start == "* ") || (start == "- ")) ? "ul" : "ol"
-          counter += 1
-          return {counter, nodeType, str, liLevel, index}
-        }
-      )
-      .skip(linebreak.atMost(1))
-      .chain(v => {
-        if (v.liLevel.filter(x => x % 2 !== 1).length > 0) {
-          initializeList();
-          return P.fail("Invalid indentation")
-        }
-        return P.succeed(v)
+      return P.seqMap(listIndent.many(), P.index, ulStart.or(olStart), liSingleLine, (_1, index, start, str) => {
+        let nodeType: 'ul' | 'ol'
+        // detect which types of content
+        liLevel.push(index.column)
+        nodeType = start == '* ' || start == '- ' ? 'ul' : 'ol'
+        counter += 1
+        return { counter, nodeType, str, liLevel, index }
       })
-      .map(v => {
-        const liLevelBefore = liLevel[v.counter - 1]
-        const liLevelCurrent = liLevel[v.counter]
-        if(liLevelBefore === liLevelCurrent) {
-          this.currentTree.children.push({
-            value: v.str as string | null,
-            children: [],
-            type: v.nodeType,
-            parent: this.currentTree
-          })
-        } else if(liLevelBefore < liLevelCurrent) {
-          const currentTreeIndex = this.currentTree.children.length - 1
-          this.currentTree = this.currentTree.children[currentTreeIndex]
-          this.currentTree.children.push({
-            children: [],
-            type: v.nodeType,
-            parent: this.currentTree,
-            value: v.str as string | null
-          })
-        } else if(liLevelBefore > liLevelCurrent) {
-          const unindetationStep = (liLevelBefore - liLevelCurrent) / 2
-          for (let i = 0; i < unindetationStep; i++) {
-            if(this.currentTree.parent !== null) {
-              this.currentTree = this.currentTree.parent
-            }
+        .skip(linebreak.atMost(1))
+        .chain((v) => {
+          if (v.liLevel.filter((x) => x % 2 !== 1).length > 0) {
+            initializeList()
+            return P.fail('Invalid indentation')
           }
-          this.currentTree.children.push({
-            type: v.nodeType,
-            children: [],
-            parent: this.currentTree,
-            value: v.str as string | null
-          })
-        }
-        const _nodeType = v.nodeType
-        return _nodeType
-      })
+          return P.succeed(v)
+        })
+        .map((v) => {
+          const liLevelBefore = liLevel[v.counter - 1]
+          const liLevelCurrent = liLevel[v.counter]
+          if (liLevelBefore === liLevelCurrent) {
+            this.currentTree.children.push({
+              value: v.str as string | null,
+              children: [],
+              type: v.nodeType,
+              parent: this.currentTree,
+            })
+          } else if (liLevelBefore < liLevelCurrent) {
+            const currentTreeIndex = this.currentTree.children.length - 1
+            this.currentTree = this.currentTree.children[currentTreeIndex]
+            this.currentTree.children.push({
+              children: [],
+              type: v.nodeType,
+              parent: this.currentTree,
+              value: v.str as string | null,
+            })
+          } else if (liLevelBefore > liLevelCurrent) {
+            const unindetationStep = (liLevelBefore - liLevelCurrent) / 2
+            for (let i = 0; i < unindetationStep; i++) {
+              if (this.currentTree.parent !== null) {
+                this.currentTree = this.currentTree.parent
+              }
+            }
+            this.currentTree.children.push({
+              type: v.nodeType,
+              children: [],
+              parent: this.currentTree,
+              value: v.str as string | null,
+            })
+          }
+          const _nodeType = v.nodeType
+          return _nodeType
+        })
     }
     const lists = P.lazy(() => {
-      return listLineContent().atLeast(1).map(nodeTypes => {
-        this.rootTree.type = nodeTypes[0]
-        const result = treeToHtml(this.rootTree)
-        // initialization
-        initializeList()
-        return result
-      })
+      return listLineContent()
+        .atLeast(1)
+        .map((nodeTypes) => {
+          this.rootTree.type = nodeTypes[0]
+          const result = treeToHtml(this.rootTree)
+          // initialization
+          initializeList()
+          return result
+        })
     })
 
-
     const treeToHtml = (treeOrNode: ListTree): T => {
-      if(treeOrNode.type === "shadow") {
+      if (treeOrNode.type === 'shadow') {
         return join(treeOrNode.children.map(treeToHtml))
-      } else if(treeOrNode.children.length === 0 && treeOrNode.value !== null) {
-        return mapper("li")(treeOrNode.value)
-      } else if(treeOrNode.children.length !== 0 && treeOrNode.value !== null) {
-        const {children} = treeOrNode
-        return mapper("li")(join([treeOrNode.value, mapper(treeOrNode.children[0].type)(join(children.map(treeToHtml)))]))
+      } else if (treeOrNode.children.length === 0 && treeOrNode.value !== null) {
+        return mapper('li')(treeOrNode.value)
+      } else if (treeOrNode.children.length !== 0 && treeOrNode.value !== null) {
+        const { children } = treeOrNode
+        return mapper('li')(
+          join([treeOrNode.value, mapper(treeOrNode.children[0].type)(join(children.map(treeToHtml)))])
+        )
       } else {
-        const {children} = treeOrNode
+        const { children } = treeOrNode
         return mapper(treeOrNode.type)(join(children.map(treeToHtml)))
       }
     }
@@ -453,21 +413,21 @@ class Parser<T> {
     const codeBlockDefinitionStr = P.regexp(/[^`\r\n]*/)
     const codeBlockStr = P.regexp(/[^\r\n]+/)
     const codeBlock = P.seqMap(
-        codeBlockBegin,
-        codeBlockDefinitionStr,
-        linebreak,
-        linebreak.or(codeBlockStr.lookahead(linebreak)).many(),
-        codeBlockEnd,
-        (_1, definition, _2, code, _3) => {
-          if (code.length > 0) {
-            code.pop()
-          }
-          if (definition === "")
-            return mapper("pre")(mapper("code")(join(code)))
-          return mapper("pre", { "data-language": definition})(mapper("code")(join(code)))
-        })
+      codeBlockBegin,
+      codeBlockDefinitionStr,
+      linebreak,
+      linebreak.or(codeBlockStr.lookahead(linebreak)).many(),
+      codeBlockEnd,
+      (_1, definition, _2, code, _3) => {
+        if (code.length > 0) {
+          code.pop()
+        }
+        if (definition === '') return mapper('pre')(mapper('code')(join(code)))
+        return mapper('pre', { 'data-language': definition })(mapper('code')(join(code)))
+      }
+    )
 
-    const blockquoteBegin = P.string("> ")
+    const blockquoteBegin = P.string('> ')
     // Parse blockquote content using inlines to support HTML tags, ruby, and math
     const blockquoteInline = P.alt(
       pluginInline,
@@ -481,18 +441,18 @@ class Parser<T> {
       htmlSelfClosing,
       htmlElement,
       P.regexp(/[^\r\n<｜\[\]\*\`\@\$]+/),
-      P.regexp(/./),
+      P.regexp(/./)
     )
     const blockquoteContent = blockquoteInline.atLeast(1).map(join)
 
     const blockquoteLine = P.lazy(() => {
       let blockquoteLevel: number = 0
       return P.seqMap(
-        blockquoteBegin.then(blockquoteBegin.many().map(x => blockquoteLevel = x.length)),
+        blockquoteBegin.then(blockquoteBegin.many().map((x) => (blockquoteLevel = x.length))),
         blockquoteContent,
         linebreak.atMost(1),
         (_1, text, _2) => {
-          return {text, blockquoteLevel}
+          return { text, blockquoteLevel }
         }
       )
     })
@@ -502,13 +462,13 @@ class Parser<T> {
       parent?: IBlockquoteVertex
     }
 
-    const createBlockquoteTree = (x: {text: unknown, blockquoteLevel: number}[]) => {
+    const createBlockquoteTree = (x: { text: unknown; blockquoteLevel: number }[]) => {
       let depth = 0
-      let root: IBlockquoteVertex = {text: null, children: []}
+      let root: IBlockquoteVertex = { text: null, children: [] }
       let currentNode = root
       for (const o of x) {
         if (o.blockquoteLevel < depth) {
-          let node = {text: o.text, children: [], parent: currentNode.parent}
+          let node = { text: o.text, children: [], parent: currentNode.parent }
           for (let i = 0; i < depth - o.blockquoteLevel; i++) {
             if (currentNode.parent) {
               currentNode = currentNode.parent
@@ -519,14 +479,14 @@ class Parser<T> {
           currentNode = node.parent
           depth = o.blockquoteLevel
         } else if (o.blockquoteLevel > depth) {
-          let node = {text: o.text, children: [], parent: currentNode}
-          let shadowNode = {text: null, children: [node], parent: currentNode}
+          let node = { text: o.text, children: [], parent: currentNode }
+          let shadowNode = { text: null, children: [node], parent: currentNode }
           node.parent = shadowNode
           currentNode.children.push(shadowNode)
           currentNode = shadowNode
           depth = o.blockquoteLevel
         } else {
-          let node = {text: o.text, children: [], parent: currentNode}
+          let node = { text: o.text, children: [], parent: currentNode }
           currentNode.children.push(node)
         }
       }
@@ -537,7 +497,7 @@ class Parser<T> {
       for (const [i, v] of tree.children.entries()) {
         if (v.text !== null) {
           if (tree.children[i + 1] && tree.children[i + 1].text !== null) {
-            result.push(join([v.text, mapper("br")(null)]))
+            result.push(join([v.text, mapper('br')(null)]))
           } else {
             result.push(v.text)
           }
@@ -545,26 +505,26 @@ class Parser<T> {
           result.push(parseBlockquoteTree(v))
         }
       }
-      const _result = mapper("blockquote")(result.reduce((a, b) => join([a, b])))
+      const _result = mapper('blockquote')(result.reduce((a, b) => join([a, b])))
       return _result
     }
     const blockquote = P.lazy(() => {
-      return blockquoteLine.atLeast(1).map(x => {
+      return blockquoteLine.atLeast(1).map((x) => {
         return parseBlockquoteTree(createBlockquoteTree(x), true)
       })
     })
     const pluginBlock = P.seqMap(
-      P.string("@["),
+      P.string('@['),
       P.regexp(/[a-zA-Z]+/),
       P.regexp(/(:[^\]]*)*/),
-      P.string("]\n"),
-      P.seq(
-        P.string("  ").result(""),
-        P.regexp(/[^\r\n]+/),
-        linebreak.atMost(1).result("\n"),
-      ).map(join).atLeast(1).map(join),
+      P.string(']\n'),
+      P.seq(P.string('  ').result(''), P.regexp(/[^\r\n]+/), linebreak.atMost(1).result('\n'))
+        .map(join)
+        .atLeast(1)
+        .map(join),
       (_1, pluginName, args, _2, content) => {
-        return this.opts.plugins && this.opts.plugins[pluginName] ? this.opts.plugins[pluginName](args, content, mapper, join)
+        return this.opts.plugins && this.opts.plugins[pluginName]
+          ? this.opts.plugins[pluginName](args, content, mapper, join)
           : join([_1, pluginName, args, _2, content])
       }
     )
@@ -574,16 +534,41 @@ class Parser<T> {
     const mathBlock = P.seqMap(
       P.regexp(/^\$\$/),
       mathBlockContent,
-      P.string("$$"),
+      P.string('$$'),
       P.alt(linebreak, P.eof),
       (_1, content, _3, _4) => {
         // Output raw $$...$$ for MathJax auto-detection
-        return "$$" + content.trim() + "$$"
+        return '$$' + content.trim() + '$$'
+      }
+    )
+
+    // Footnote definition: [^1]: content (with optional indented continuation lines)
+    const footnoteDefFirstLine = P.regexp(/[^\r\n]*/)
+    const footnoteDefContLine = P.seqMap(
+      P.regexp(/^    /), // 4 spaces or tab for continuation
+      P.regexp(/[^\r\n]*/),
+      (_indent, content) => content
+    )
+    const footnoteDefContLineAlt = P.seqMap(
+      P.string('\t'), // tab for continuation
+      P.regexp(/[^\r\n]*/),
+      (_indent, content) => content
+    )
+    const footnoteDef = P.seqMap(
+      P.regexp(/^\[\^([0-9]+)\]:\s*/, 1),
+      footnoteDefFirstLine,
+      P.seq(linebreak, P.alt(footnoteDefContLine, footnoteDefContLineAlt))
+        .map(([_br, content]) => content)
+        .many(),
+      P.alt(linebreak, P.eof),
+      (num, firstLine, contLines, _end) => {
+        const fullContent = [firstLine, ...contLines].join('\n').trim()
+        return mapper('footnote-def', { id: num })(fullContent)
       }
     )
 
     const block = P.alt(
-      P.regexp(/\s+/).result(""),
+      P.regexp(/\s+/).result(''),
       pluginBlock,
       h1Special,
       h2Special,
@@ -596,66 +581,126 @@ class Parser<T> {
       table,
       codeBlock,
       mathBlock,
+      footnoteDef,
       lists,
       blockquote,
       paragraph,
-      linebreak.result(""),
+      linebreak.result('')
     )
 
-    this.acceptables = P.alt(
-      block
-    ).many().map(join) as any as P.Parser<T>
+    this.acceptables = P.alt(block).many().map(join) as any as P.Parser<T>
   }
   parse(s: string) {
     this.liLevelBefore = this.liLevel = null
     this.rootTree = this.currentTree = {
       value: null,
       children: [],
-      type: "shadow",
-      parent: null
+      type: 'shadow',
+      parent: null,
     }
     const parsed = this.acceptables.parse(s.trim())
-    if(parsed.status === true && parsed.hasOwnProperty("value"))
-      return this.opts.export.postprocess(parsed.value)
+    if (parsed.status === true && parsed.hasOwnProperty('value')) return this.opts.export.postprocess(parsed.value)
     console.error(s.trim())
     console.error(parsed)
-    throw new Error("Parsing was failed.")
+    throw new Error('Parsing was failed.')
   }
 }
 
 function escapeHtml(text: string): string {
-  const map: {[key: string]: string} = {
+  const map: { [key: string]: string } = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#39;'
+    "'": '&#39;',
   }
   return text.replace(/[&<>"']/g, (m) => map[m])
 }
 
 export const asHTML: ExportType<string> = {
-  mapper: (tag, args) => children => [
-    "<" + tag,
-    args  ? " " + Object.keys(args).map(x => `${x}="${escapeHtml(String(args[x]))}"`).join(" ") : "",
-    children !== null && children !== "" ? ">" + children + "</" + tag + ">" : " />"
-  ].join(""),
-  join: (x: string[]) => x.join(""),
-  postprocess: (x: string) => x
+  mapper: (tag, args) => (children) => {
+    // Handle footnote reference - output as superscript link
+    if (tag === 'footnote-ref' && args?.id) {
+      const id = args.id
+      return `<sup id="fnref${id}"><a href="#fn${id}">${id}</a></sup>`
+    }
+    // Handle footnote definition - store for later collection
+    if (tag === 'footnote-def' && args?.id) {
+      const id = args.id
+      return `<footnote-def data-id="${id}">${children}</footnote-def>`
+    }
+    return [
+      '<' + tag,
+      args
+        ? ' ' +
+          Object.keys(args)
+            .map((x) => `${x}="${escapeHtml(String(args[x]))}"`)
+            .join(' ')
+        : '',
+      children !== null && children !== '' ? '>' + children + '</' + tag + '>' : ' />',
+    ].join('')
+  },
+  join: (x: string[]) => x.join(''),
+  postprocess: (x: string) => {
+    // Collect footnote definitions and move them to the end
+    const footnoteDefRegex = /<footnote-def data-id="(\d+)">([\s\S]*?)<\/footnote-def>/g
+    const footnotes: { id: string; content: string }[] = []
+    let match
+    while ((match = footnoteDefRegex.exec(x)) !== null) {
+      footnotes.push({ id: match[1], content: match[2] })
+    }
+    // Remove footnote-def tags from body
+    let result = x.replace(/<footnote-def data-id="\d+">([\s\S]*?)<\/footnote-def>/g, '')
+    // Append footnotes section if any exist
+    if (footnotes.length > 0) {
+      // Sort by id
+      footnotes.sort((a, b) => parseInt(a.id) - parseInt(b.id))
+      const footnotesHtml = footnotes
+        .map((fn) => `<li id="fn${fn.id}">${fn.content} <a href="#fnref${fn.id}">↩</a></li>`)
+        .join('\n')
+      result += `\n<section class="footnotes">\n<ol>\n${footnotesHtml}\n</ol>\n</section>`
+    }
+    return result
+  },
 }
 
 export const asAST: ExportType<any> = {
-  mapper: (tag, args) => children => [
+  mapper: (tag, args) => (children) => [
     tag,
     args ? args : null,
-    children
+    // Unwrap single-element arrays containing only a string for cleaner AST
+    Array.isArray(children) && children.length === 1 && typeof children[0] === 'string' ? children[0] : children,
   ],
-  join: (x: any) => x, // identical
+  join: (x: any) => {
+    // Flatten nested single-element string arrays for cleaner AST
+    if (!Array.isArray(x)) return x
+    return x.map((item: any) => {
+      if (Array.isArray(item) && item.length === 1 && typeof item[0] === 'string') {
+        return item[0]
+      }
+      return item
+    })
+  },
   postprocess: (obj: Array<any>) => {
-    return obj.filter((x: any) => (x !== ''))
-  }
+    // Filter empty strings and collect footnote definitions at top level only
+    const filtered = obj.filter((x: any) => x !== '')
+    const footnotes: any[] = []
+    const result: any[] = []
+    for (const node of filtered) {
+      if (Array.isArray(node) && node[0] === 'footnote-def') {
+        footnotes.push(node)
+      } else {
+        result.push(node)
+      }
+    }
+    // Append footnotes section at the end if any exist
+    if (footnotes.length > 0) {
+      footnotes.sort((a, b) => parseInt(a[1]?.id || '0') - parseInt(b[1]?.id || '0'))
+      result.push(['footnotes', null, footnotes])
+    }
+    return result
+  },
 }
-
 
 export const parse = (s: string) => {
   const p = new Parser<any>({

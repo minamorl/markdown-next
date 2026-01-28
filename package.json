@@ -7,7 +7,11 @@
     "build": "tsc",
     "example": "cd examples && webpack",
     "prepublish": "pnpm run build",
-    "test": "pnpm run build && mocha lib/test"
+    "test": "pnpm run build && mocha lib/test",
+    "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix",
+    "format": "prettier --write 'src/**/*.ts' 'test/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'test/**/*.ts'"
   },
   "author": "minamorl",
   "license": "MIT",
@@ -16,11 +20,16 @@
     "LICENSE"
   ],
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.0.0",
     "@types/power-assert": "^1.5.12",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
     "mocha": "^11.7.5",
     "power-assert": "^1.6.1",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "webpack": "^5.102.1",
     "webpack-cli": "^6.0.1"
