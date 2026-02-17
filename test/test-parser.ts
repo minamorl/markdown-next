@@ -850,6 +850,40 @@ End.`
         const result = parse(input)
         assert(result.includes('<pre>'))
       })
+
+      it('should parse code block followed by text', () => {
+        const input = 'Hello\n\n```ts\nconst x = 1;\nconst y = 2;\n```\n\nWorld'
+        const expect = '<p>Hello</p><pre data-language="ts"><code>const x = 1;\nconst y = 2;</code></pre><p>World</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should parse multi-line code block followed by text', () => {
+        const input = '```typescript\nfunction hello() {\n  return 42;\n}\n```\n\nDone.'
+        const expect = '<pre data-language="typescript"><code>function hello() {\n  return 42;\n}</code></pre><p>Done.</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should parse code block in typical LLM output pattern', () => {
+        const input = 'Here is the code:\n\n```ts\nconst x = 1;\n```\n\nThis should work.'
+        const expect = '<p>Here is the code:</p><pre data-language="ts"><code>const x = 1;</code></pre><p>This should work.</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should parse code block followed immediately by text (no blank line)', () => {
+        const input = '```ts\ncode\n```\ntext after'
+        const result = parse(input)
+        assert(result.includes('<pre'))
+        assert(result.includes('code'))
+      })
+
+      it('should parse multiple code blocks', () => {
+        const input = '```ts\nfirst\n```\n\n```python\nsecond\n```'
+        const result = parse(input)
+        assert(result.includes('<pre data-language="ts">'))
+        assert(result.includes('<pre data-language="python">'))
+        assert(result.includes('first'))
+        assert(result.includes('second'))
+      })
     })
 
     describe('Table edge cases', () => {

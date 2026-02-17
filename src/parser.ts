@@ -288,7 +288,7 @@ export class Parser<T> {
 
     const inlines = inline.atLeast(1).map(join)
     const paragraphBegin = inlines
-    const paragraphEnd = ignore(/```\n.*\n```/)
+    const paragraphEnd = ignore(/```[^`\r\n]*\n[\s\S]*?\n```/)
     const paragraphLine: P.Parser<T> = P.lazy(() =>
       P.alt(
         P.seq(paragraphBegin, linebreak.skip(paragraphEnd).result(mapper('br')(null)), paragraphLine).map(join),
@@ -411,15 +411,18 @@ export class Parser<T> {
     const codeBlockBegin = P.regexp(/^```/)
     const codeBlockEnd = P.regexp(/^```/)
     const codeBlockDefinitionStr = P.regexp(/[^`\r\n]*/)
-    const codeBlockStr = P.regexp(/[^\r\n]+/)
+    // Match a code line that is NOT a closing fence (``` at start of line)
+    const codeBlockStr = P.regexp(/(?!```)[^\r\n]+/)
     const codeBlock = P.seqMap(
       codeBlockBegin,
       codeBlockDefinitionStr,
       linebreak,
-      linebreak.or(codeBlockStr.lookahead(linebreak)).many(),
+      linebreak.or(codeBlockStr).many(),
+      linebreak.atMost(1),
       codeBlockEnd,
-      (_1, definition, _2, code, _3) => {
-        if (code.length > 0) {
+      (_1, definition, _2, code, _3, _4) => {
+        // Remove trailing linebreak consumed by .many() before the closing fence
+        while (code.length > 0 && (code[code.length - 1] === '\n' || code[code.length - 1] === '\r\n' || code[code.length - 1] === '\r' || code[code.length - 1] === '')) {
           code.pop()
         }
         if (definition === '') return mapper('pre')(mapper('code')(join(code)))
