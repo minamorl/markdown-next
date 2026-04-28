@@ -686,6 +686,50 @@ End.`
       })
     })
 
+    describe('Japanese-style first-line indentation (U+3000)', () => {
+      it('should preserve a single full-width space at paragraph start', () => {
+        const input = '\u3000これは全角スペースで字下げ'
+        const expect = '<p>\u3000これは全角スペースで字下げ</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should preserve multiple full-width spaces at paragraph start', () => {
+        const input = '\u3000\u3000これは全角スペース2つ'
+        const expect = '<p>\u3000\u3000これは全角スペース2つ</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should preserve full-width indentation after a heading', () => {
+        const input = '# 見出し\n\n\u3000本文の字下げ'
+        const expect = '<h1>見出し</h1><p>\u3000本文の字下げ</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should preserve full-width indentation after a blank line', () => {
+        const input = '段落1\n\n\u3000段落2は字下げ'
+        const expect = '<p>段落1</p><p>\u3000段落2は字下げ</p>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should preserve full-width indentation before inline strong', () => {
+        const input = '\u3000**強調**字下げ後'
+        const result = parse(input)
+        assert.equal(result, '<p>\u3000<strong>強調</strong>字下げ後</p>')
+      })
+
+      it('should preserve full-width indentation in AST output', () => {
+        const p = new Parser({ export: asAST })
+        const ast = p.parse('\u3000本文の字下げ')
+        assert.deepStrictEqual(ast, [['p', null, '\u3000本文の字下げ']])
+      })
+
+      it('should still strip half-width leading spaces (legacy behavior)', () => {
+        const input = ' 半角スペース字下げ'
+        const expect = '<p>半角スペース字下げ</p>'
+        assert.equal(parse(input), expect)
+      })
+    })
+
     describe('Empty elements', () => {
       it('should handle empty strong tags', () => {
         const input = `****`
