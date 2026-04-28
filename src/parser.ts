@@ -83,7 +83,9 @@ export class Parser<T> {
     const join: any = this.opts.export.join
     const mapper = this.opts.export.mapper
     const token = (p: P.Parser<any>) => {
-      return p.skip(P.regexp(/\s*/m))
+      // Skip trailing whitespace EXCEPT full-width space U+3000, so the next
+      // block's Japanese-style leading indentation is preserved.
+      return p.skip(P.regexp(/[^\S\u3000]*/m))
     }
     const h1Special = P.regexp(/^(.*)\n\=+/, 1)
       .skip(P.alt(P.eof, P.string('\n')))
@@ -571,7 +573,9 @@ export class Parser<T> {
     )
 
     const block = P.alt(
-      P.regexp(/\s+/).result(''),
+      // Block separator: consume any whitespace EXCEPT full-width space U+3000,
+      // so Japanese-style first-line indentation is preserved on the next paragraph.
+      P.regexp(/[^\S\u3000]+/).result(''),
       pluginBlock,
       h1Special,
       h2Special,
@@ -601,9 +605,14 @@ export class Parser<T> {
       type: 'shadow',
       parent: null,
     }
-    const parsed = this.acceptables.parse(s.trim())
+    // Trim leading/trailing whitespace EXCEPT full-width space U+3000, so that
+    // Japanese-style first-line indentation is preserved at the very beginning
+    // of the document. (String.prototype.trim() would strip U+3000, which we
+    // do not want here.)
+    const trimmed = s.replace(/^[^\S\u3000]+/, '').replace(/[^\S\u3000]+$/, '')
+    const parsed = this.acceptables.parse(trimmed)
     if (parsed.status === true && parsed.hasOwnProperty('value')) return this.opts.export.postprocess(parsed.value)
-    console.error(s.trim())
+    console.error(trimmed)
     console.error(parsed)
     throw new Error('Parsing was failed.')
   }
