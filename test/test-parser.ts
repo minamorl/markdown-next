@@ -440,6 +440,51 @@ code block
       const expect = `<p><code>_</code></p>`
       assert.equal(parse(input), expect)
     })
+    it('can parse inline code contains backtick via double-backtick delimiters', () => {
+      const input = '`` ` ``'
+      const expect = '<p><code>`</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains backtick run', () => {
+      const input = '``a`b``'
+      const expect = '<p><code>a`b</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains backtick run longer than delimiter', () => {
+      const input = '` ``` `'
+      const expect = '<p><code>```</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains longer backtick run without padding', () => {
+      const input = '`a``b`'
+      const expect = '<p><code>a``b</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('keeps unpaired double backticks literal', () => {
+      const input = 'a `` b'
+      const expect = '<p>a `` b</p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse code block containing a triple-backtick fence', () => {
+      const input = '````\n```\ncode\n```\n````'
+      const expect = '<pre><code>```\ncode\n```</code></pre>'
+      assert.equal(parse(input), expect)
+    })
+    it('can close a code block with a longer fence', () => {
+      const input = '```js\nx\n`````'
+      const expect = '<pre data-language="js"><code>x</code></pre>'
+      assert.equal(parse(input), expect)
+    })
+    it('keeps paragraph intact when a following fence never closes', () => {
+      const input = 'para\n````\nx\n```'
+      const expect = '<p>para<br />````<br />x<br />```</p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse table cell with double-backtick code span', () => {
+      const input = '| a | b |\n|---|---|\n| `` ` `` | z |'
+      const expect = '<table><tr><th>a</th><th>b</th></tr><tr><td><code>`</code></td><td>z</td></tr></table>'
+      assert.equal(parse(input), expect)
+    })
   })
   describe('AST', () => {
     it('can output paragraph', () => {
