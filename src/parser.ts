@@ -223,8 +223,9 @@ export class Parser<T> {
       P.regexp(/./)
     )
 
-    // Table cell content - supports inline elements
-    const tableCellInline = P.alt(anchor, img, em, strong, code, P.regexp(/[^\r\n\[\]\*|`]+/))
+    // Table cell content - supports inline elements. Cells are already split
+    // at unescaped pipes, so a `|` here is unescaped content and stays plain.
+    const tableCellInline = P.alt(anchor, img, em, strong, code, P.regexp(/[^\r\n\[\]\*`]+/))
 
     // Parse a single table row: |cell|cell|cell| with flexible spacing
     const parseTableRow = (input: string): string[] => {
@@ -233,9 +234,29 @@ export class Parser<T> {
       if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
         return []
       }
-      // Remove first and last pipe, split by remaining pipes
+      // Remove first and last pipe, then split at unescaped pipes.
+      // Per GFM, `\|` is a literal `|` even inside a code span:
+      // https://github.github.com/gfm/#tables-extension-
       const inner = trimmed.slice(1, -1)
-      return inner.split('|').map((cell) => cell.trim())
+      const cells: string[] = []
+      let current = ''
+      for (let i = 0; i < inner.length; i++) {
+        const ch = inner[i]
+        if (ch === '\\' && inner[i + 1] === '|') {
+          current += '|'
+          i++
+        } else if (ch === '\\' && i + 1 < inner.length) {
+          current += ch + inner[i + 1]
+          i++
+        } else if (ch === '|') {
+          cells.push(current.trim())
+          current = ''
+        } else {
+          current += ch
+        }
+      }
+      cells.push(current.trim())
+      return cells
     }
 
     // Table row regex - matches |...|
