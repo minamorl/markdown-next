@@ -1004,6 +1004,30 @@ End.`
         assert.equal(parse(input), expect)
       })
 
+      it('should treat escaped pipe as cell content', () => {
+        const input = `| a | b |
+| --- | --- |
+| x\\|y | z |`
+        const expect = `<table><tr><th>a</th><th>b</th></tr><tr><td>x|y</td><td>z</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      it('should treat escaped pipe as content even inside code span (GFM)', () => {
+        const input = `| a | b |
+| --- | --- |
+| \`code_that_has('\\|').in_it\` | plain |`
+        const expect = `<table><tr><th>a</th><th>b</th></tr><tr><td><code>code_that_has('|').in_it</code></td><td>plain</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      it('should split cell at unescaped pipe even inside code span (GFM)', () => {
+        const input = `| a | b | c |
+| --- | --- | --- |
+| \`x|y\` | z |`
+        const result = parse(input)
+        assert(result.includes('<td>`x</td><td>y`</td><td>z</td>'))
+      })
+
       // Table alignment markers
       it('should parse table with left alignment', () => {
         const input = `| left |
