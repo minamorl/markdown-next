@@ -75,7 +75,6 @@ export class Parser<T> {
     const asterisk = P.string('*')
     const sharp = P.string('#')
     const plainStr = P.regexp(/[^`_\*\r\n]+/)
-    const codePlainStr = P.regexp(/[^`\r\n]+/)
     const linebreak = P.string('\r\n').or(P.string('\n')).or(P.string('\r'))
     const equal = P.string('=')
     const minus = P.string('-')
@@ -130,9 +129,19 @@ export class Parser<T> {
       }
     )
 
-    const codeStart = P.string('`')
-    const codeEnd = P.string('`')
-    const code = codeStart.then(codePlainStr).map(mapper('code')).skip(codeEnd)
+    // Code span per https://spec.commonmark.org/0.31.2/#code-spans : opens
+    // with a run of backticks and closes with a run of the same length, so a
+    // run of any other length is content: `` ` ``. The (?!`) guards keep
+    // backtracking from splitting a run into a shorter opener/closer.
+    const code = P.regexp(/(`+)(?!`)((?:[^`\r\n]|(?!\1(?!`))`+(?!`))*)\1(?!`)/, 2)
+      .map((content) =>
+        // One space of padding is stripped so a span can start/end with a
+        // backtick: `` ` `` -> `
+        content.startsWith(' ') && content.endsWith(' ') && content.trim() !== ''
+          ? content.slice(1, -1)
+          : content
+      )
+      .map(mapper('code'))
 
     const pluginInline = P.seqMap(
       P.string('@['),
@@ -290,7 +299,9 @@ export class Parser<T> {
 
     const inlines = inline.atLeast(1).map(join)
     const paragraphBegin = inlines
-    const paragraphEnd = ignore(/```[^`\r\n]*\n[\s\S]*?\n```/)
+    // \1 keeps this lookahead consistent with codeBlock: a shorter backtick
+    // run does not close the fence, so it must not end a paragraph either.
+    const paragraphEnd = ignore(/(`{3,})[^`\r\n]*\n[\s\S]*?\n\1/)
     const paragraphLine: P.Parser<T> = P.lazy(() =>
       P.alt(
         P.seq(paragraphBegin, linebreak.skip(paragraphEnd).result(mapper('br')(null)), paragraphLine).map(join),
@@ -410,27 +421,31 @@ export class Parser<T> {
       }
     }
 
-    const codeBlockBegin = P.regexp(/^```/)
-    const codeBlockEnd = P.regexp(/^```/)
     const codeBlockDefinitionStr = P.regexp(/[^`\r\n]*/)
-    // Match a code line that is NOT a closing fence (``` at start of line)
-    const codeBlockStr = P.regexp(/(?!```)[^\r\n]+/)
-    const codeBlock = P.seqMap(
-      codeBlockBegin,
-      codeBlockDefinitionStr,
-      linebreak,
-      linebreak.or(codeBlockStr).many(),
-      linebreak.atMost(1),
-      codeBlockEnd,
-      (_1, definition, _2, code, _3, _4) => {
-        // Remove trailing linebreak consumed by .many() before the closing fence
-        while (code.length > 0 && (code[code.length - 1] === '\n' || code[code.length - 1] === '\r\n' || code[code.length - 1] === '\r' || code[code.length - 1] === '')) {
-          code.pop()
+    // Fenced code block per
+    // https://spec.commonmark.org/0.31.2/#fenced-code-blocks : the fence
+    // closes only on a line of at least as many backticks as the opener, so
+    // a ``` line can appear inside a ```` block.
+    const codeBlock = P.regexp(/`{3,}/).chain((fence) => {
+      const closingFence = P.regexp(new RegExp('`{' + fence.length + ',}[ \\t]*'))
+      // Match a code line that is NOT a closing fence
+      const codeBlockStr = P.regexp(new RegExp('(?!`{' + fence.length + ',}[ \\t]*(?:[\\r\\n]|$))[^\\r\\n]+'))
+      return P.seqMap(
+        codeBlockDefinitionStr,
+        linebreak,
+        linebreak.or(codeBlockStr).many(),
+        linebreak.atMost(1),
+        closingFence,
+        (definition, _2, code, _3, _4) => {
+          // Remove trailing linebreak consumed by .many() before the closing fence
+          while (code.length > 0 && (code[code.length - 1] === '\n' || code[code.length - 1] === '\r\n' || code[code.length - 1] === '\r' || code[code.length - 1] === '')) {
+            code.pop()
+          }
+          if (definition === '') return mapper('pre')(mapper('code')(join(code)))
+          return mapper('pre', { 'data-language': definition })(mapper('code')(join(code)))
         }
-        if (definition === '') return mapper('pre')(mapper('code')(join(code)))
-        return mapper('pre', { 'data-language': definition })(mapper('code')(join(code)))
-      }
-    )
+      )
+    })
 
     const blockquoteBegin = P.string('> ')
     // Parse blockquote content using inlines to support HTML tags, ruby, and math
