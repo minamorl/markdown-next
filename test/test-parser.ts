@@ -1,4 +1,4 @@
-import * as assert from 'power-assert'
+import assert = require('power-assert')
 
 import { parse, Parser, asAST, asHTML } from '../src/parser'
 
@@ -438,6 +438,51 @@ code block
     it('can parse inline code contains underscore', () => {
       const input = '`_`'
       const expect = `<p><code>_</code></p>`
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains backtick via double-backtick delimiters', () => {
+      const input = '`` ` ``'
+      const expect = '<p><code>`</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains backtick run', () => {
+      const input = '``a`b``'
+      const expect = '<p><code>a`b</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains backtick run longer than delimiter', () => {
+      const input = '` ``` `'
+      const expect = '<p><code>```</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse inline code contains longer backtick run without padding', () => {
+      const input = '`a``b`'
+      const expect = '<p><code>a``b</code></p>'
+      assert.equal(parse(input), expect)
+    })
+    it('keeps unpaired double backticks literal', () => {
+      const input = 'a `` b'
+      const expect = '<p>a `` b</p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse code block containing a triple-backtick fence', () => {
+      const input = '````\n```\ncode\n```\n````'
+      const expect = '<pre><code>```\ncode\n```</code></pre>'
+      assert.equal(parse(input), expect)
+    })
+    it('can close a code block with a longer fence', () => {
+      const input = '```js\nx\n`````'
+      const expect = '<pre data-language="js"><code>x</code></pre>'
+      assert.equal(parse(input), expect)
+    })
+    it('keeps paragraph intact when a following fence never closes', () => {
+      const input = 'para\n````\nx\n```'
+      const expect = '<p>para<br />````<br />x<br />```</p>'
+      assert.equal(parse(input), expect)
+    })
+    it('can parse table cell with double-backtick code span', () => {
+      const input = '| a | b |\n|---|---|\n| `` ` `` | z |'
+      const expect = '<table><tr><th>a</th><th>b</th></tr><tr><td><code>`</code></td><td>z</td></tr></table>'
       assert.equal(parse(input), expect)
     })
   })
@@ -1002,6 +1047,50 @@ End.`
 | e | f |`
         const expect = `<table><tr><th>h1</th><th>h2</th></tr><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr><tr><td>e</td><td>f</td></tr></table>`
         assert.equal(parse(input), expect)
+      })
+
+      it('should treat escaped pipe as cell content', () => {
+        const input = `| a | b |
+| --- | --- |
+| x\\|y | z |`
+        const expect = `<table><tr><th>a</th><th>b</th></tr><tr><td>x|y</td><td>z</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      it('should treat escaped pipe as content even inside code span (GFM)', () => {
+        const input = `| a | b |
+| --- | --- |
+| \`code_that_has('\\|').in_it\` | plain |`
+        const expect = `<table><tr><th>a</th><th>b</th></tr><tr><td><code>code_that_has('|').in_it</code></td><td>plain</td></tr></table>`
+        assert.equal(parse(input), expect)
+      })
+
+      it('should combine escaped pipes with double-backtick code spans', () => {
+        const input = '| a | b |\n| --- | --- |\n| `` `x\\|y` `` | z |'
+        const expect = '<table><tr><th>a</th><th>b</th></tr><tr><td><code>`x|y`</code></td><td>z</td></tr></table>'
+        assert.equal(parse(input), expect)
+      })
+
+      it('should preserve combined escaped pipes and backtick runs in AST output', () => {
+        const parser = new Parser({ export: asAST })
+        const input = '| a | b |\n| --- | --- |\n| `` `x\\|y` `` | z |'
+        const result = parser.parse(input)
+        assert.deepEqual(result[0][2][1], [
+          'tr',
+          null,
+          [
+            ['td', null, [['code', null, '`x|y`']]],
+            ['td', null, 'z'],
+          ],
+        ])
+      })
+
+      it('should split cell at unescaped pipe even inside code span (GFM)', () => {
+        const input = `| a | b | c |
+| --- | --- | --- |
+| \`x|y\` | z |`
+        const result = parse(input)
+        assert(result.includes('<td>`x</td><td>y`</td><td>z</td>'))
       })
 
       // Table alignment markers
