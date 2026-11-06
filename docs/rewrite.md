@@ -1461,3 +1461,11 @@ Input: `<b class="x">text</i>`
 |---|---|---|
 | html | `"<p><b>text</i></p>"` | `"<p><b class=\"x\">text</i></p>"` |
 | ast | `[["p",null,[["<b>","text","</i>"]]]]` | `[["p",null,[["<b class=\"x\">","text","</i>"]]]]` |
+
+### Current candidate verification data
+
+Fresh raw: [prepublish benchmark](../bench/prepublish/benchmark.json), [journal](../bench/prepublish/benchmark.json.journal.jsonl), [measurement hashes](../bench/prepublish/measurement-input-hashes.json). Historical measurement files remain unchanged. Both npm run bench:verify and node bench/followup/verify-raw.cjs target this current run. Source and compiled entity-table hashes are included in the new journal identity and result. README/package/lockfile and all measurement harness hashes are checked against the new manifest. The golden parser hash still identifies the historical initial capture.
+
+Measurement began (UTC): 2026-11-06T20:32:54.067Z; ended (UTC): 2026-11-06T20:36:08.594Z. measuredRevision: ef58ef35246ea8a39fca77d08b2d773c3b3fbde8; parserSha256: 9bcad9fba3db5b5fec2b2beb460585524c9a047c9d6bd391d1b7c6498a0abbb9. This revision is the local phase commit in the delivery bundle; subsequent commits contain evidence only. No cross-run causal performance claim is made.
+
+Final commands, exact output and exits are under [bench/prepublish](../bench/prepublish/README.md). Chromium input and real clipboard Ctrl+V evidence is in [browser.txt](../bench/prepublish/browser.txt), with [the sample screenshot](../bench/prepublish/sample.png). No external delivery or npm publish was performed.

@@ -1,0 +1,8 @@
+command: ["npm","run","build"]
+environment: {"pnpm_config_verify_deps_before_run":"false"}
+
+> @rainpulse/markdown-next@2.3.0 build
+> tsc
+
+
+exit_code: 0; signal: null

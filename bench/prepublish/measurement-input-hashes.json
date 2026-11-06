@@ -1,0 +1,19 @@
+{
+  "src/parser.ts": "9bcad9fba3db5b5fec2b2beb460585524c9a047c9d6bd391d1b7c6498a0abbb9",
+  "src/html-entities.ts": "f40e6dd4fc9aafa860490a4a856ec42ec153cbb8b7f2ed19417e42c6d7f56694",
+  "lib/src/parser.js": "de391a7b5623004dd0019d153b9c11c96427295cbeefccacc2b0e0630d3283fa",
+  "lib/src/html-entities.js": "f78928d6569bf094fd6d306a49f12c16594a9501539eb41857614d6c53e379ac",
+  "test/characterization/golden.json": "d1d8a973944253022d607f1d1a9e0448ac7518483ec37e44dad3684059184990",
+  "test/characterization/corpus.json": "6f80ae87cae667c5196406ad026b68c63ea2258301923abd28418a4c5ed110e5",
+  "test/characterization/support.cjs": "0854fd1b92be740e590e45d37198d281af1827a5dc6c134f85c13be5d07644b8",
+  "bench/run.cjs": "3a55a9530ed26cb8b39ecae22bbe8ff40510e8d393882bd478589ba788c820b9",
+  "bench/worker.cjs": "bba37fd4945439d313d186fa9083dfa0805611f553cf55a32493f9c00cff0508",
+  "bench/stats.cjs": "0db1d57cde37d95bd3e99d40e62938eb5863457b4a62811b1b8b6f78550afeaa",
+  "bench/checkpoint.cjs": "6605c9fa771e0318049f29cc72ae71ff7dc35c19fc4e4ccc8f8d9a2203043cd4",
+  "bench/verify.cjs": "b4a272057914a8c00997e26267ac1a9db9cffb63ea6525ae9f1f9922d35e29e3",
+  "bench/followup/verify-raw.cjs": "fbd5700b1a449adcb59ab17f39b8bb4591e144e8c43a266b89ff64c511830d30",
+  "README.md": "0e4b405dc51843d087c8859504ebd26f5406312ff54772c4901e1079166fd560",
+  "package.json": "b4345323b7d26b89e53d421dcede168800eb3a491227426ff4bf5ae92d81d7f7",
+  "pnpm-lock.yaml": "ecee5e9c3c1bcc5d80cb48564bbeb645b8d45335606acc5f16b9381959145b93",
+  "examples/index.js": "628a10d44d86ea42a89eeb7f60cd608b16357ad8e9192232b790e4a6bd5a0160"
+}

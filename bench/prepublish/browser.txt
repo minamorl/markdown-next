@@ -1,0 +1,9 @@
+command: ["node","bench/prepublish/browser.cjs"]
+Chromium: Chrome/150.0.7871.46
+Page: /examples/index.html (local HTTP, built examples/dist/bundle.js)
+typing first character: {"value":"a","html":"<p>a</p>","events":[{"trusted":true,"type":"insertText"}]}
+typing next character: {"value":"ab","html":"<p>ab</p>","events":[{"trusted":true,"type":"insertText"},{"trusted":true,"type":"insertText"}]}
+real clipboard Ctrl+V: {"value":"ab 貼り付け **bold**","html":"<p>ab 貼り付け <strong>bold</strong></p>","events":[{"trusted":true,"type":"insertText"},{"trusted":true,"type":"insertText"},{"trusted":true,"type":"insertFromPaste"}]}
+screen_run: Chromium opened /examples/index.html; key input updated immediately; real clipboard Ctrl+V rendered bold text; no console errors.
+
+exit_code: 0; signal: null
