@@ -1,0 +1,13 @@
+{
+  "src/parser.ts": "49d149a1b4eeb7790033fc17a877f154f96cba5b3626810da5363a1315fe43d6",
+  "lib/src/parser.js": "023432fbae65b26128db05db2608002283478cbacda978f2a0cc158ca2b91fa9",
+  "test/characterization/golden.json": "a7cbcaa12b02467f7ad017d76d1c22208bb64e812516abad79ba810a3ce107d0",
+  "test/characterization/corpus.json": "6f80ae87cae667c5196406ad026b68c63ea2258301923abd28418a4c5ed110e5",
+  "bench/run.cjs": "ef2dff3cd434bfff737cd21d446670c54e9f92126319926a30b04ce226ad5228",
+  "bench/worker.cjs": "bba37fd4945439d313d186fa9083dfa0805611f553cf55a32493f9c00cff0508",
+  "bench/stats.cjs": "0db1d57cde37d95bd3e99d40e62938eb5863457b4a62811b1b8b6f78550afeaa",
+  "bench/checkpoint.cjs": "6605c9fa771e0318049f29cc72ae71ff7dc35c19fc4e4ccc8f8d9a2203043cd4",
+  "README.md": "9433e5c9f1f8f1bab6be4652bb7fbdaad2fe7ace2d906614b7eefebfe94929b9",
+  "package.json": "d5cc9830612d6f0c5dad1029cbbb2565b498f1eb1a0b00444a979f55d686339f",
+  "pnpm-lock.yaml": "ecee5e9c3c1bcc5d80cb48564bbeb645b8d45335606acc5f16b9381959145b93"
+}

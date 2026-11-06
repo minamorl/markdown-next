@@ -1,0 +1,25 @@
+command: ["npm","run","test:characterization"]
+
+> @minamorl/markdown-next@2.2.4 test:characterization
+> npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs
+
+
+> @minamorl/markdown-next@2.2.4 build
+> tsc
+
+287 frozen inputs; 1722 exact comparisons (AST, HTML, plugin calls, diagnostics, forward/reverse reuse).
+baseline=f71fb55dd35cd102c64135ae15a9837ee3ca6b21 corpus_sha256=e58da07572e70f70b3191d04a6f5ed7476766069432a1b2a2794962eb3093c98
+✔ checkpoint keeps complete UTF-8 records and discards only a torn final append (2.176338ms)
+✔ nearest-rank percentiles and minimum samples are enforced (6.923996ms)
+✔ comparison runner rejects HTML, AST, and plugin argument regressions (379.805338ms)
+✔ benchmark worker returns independently verified cold and warm observations (213.531406ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 737.96726
+
+exit_code: 0; signal: null

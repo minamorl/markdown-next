@@ -1,17 +1,12 @@
-import P = require('parsimmon')
-
-interface IndexType {
-  offset: number
-  line: number
-  column: number
-}
-
 export interface ListTree {
   type: 'ul' | 'ol' | 'shadow'
   children: Array<ListTree>
   value: string | null
   parent: ListTree | null
 }
+
+/** Tuple elements, text and the nested groups emitted by the AST exporter. */
+export type ASTNode = string | null | [string, Record<string, unknown> | null, ASTNode] | ASTNode[]
 
 export type Plugin<T> = (args: string, content: any, mapper: Mapper<T>, join: Function) => string
 
@@ -23,634 +18,892 @@ export interface ExportType<T> {
   postprocess: (x: any) => any
 }
 
+interface ParseSuccess<T> {
+  status: true
+  value: T
+}
+
+interface ParseFailure {
+  status: false
+  index: { offset: number; line: number; column: number }
+  expected: string[]
+}
+
+type InlineContext = 0 | 1 | 2 | 3 // paragraph, list, quote, table
+
+function whitespace(c: number): boolean {
+  switch (c) {
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 32:
+    case 160:
+    case 5760:
+    case 8232:
+    case 8233:
+    case 8239:
+    case 8287:
+    case 12288:
+    case 65279:
+      return true
+    default:
+      return c >= 8192 && c <= 8202
+  }
+}
+
+function letter(c: number): boolean {
+  return (c >= 65 && c <= 90) || (c >= 97 && c <= 122)
+}
+
+function digit(c: number): boolean {
+  return c >= 48 && c <= 57
+}
+
+function plain(c: number): boolean {
+  return c !== 96 && c !== 95 && c !== 42 && c !== 13 && c !== 10
+}
+
+function textChar(c: number, context: InlineContext): boolean {
+  switch (c) {
+    case 13:
+    case 10:
+    case 91:
+    case 93:
+    case 42:
+    case 96:
+      return false
+    case 36:
+      return context === 3
+    case 60:
+    case 65372:
+    case 64:
+      return context === 1 || context === 3
+    default:
+      // Legacy =-\[ is the ASCII range '=' through '[', not a literal dash.
+      return context !== 0 || c < 61 || c > 91
+  }
+}
+
+interface QuoteTree {
+  text: any
+  children: QuoteTree[]
+  parent?: QuoteTree
+}
+
+// One mutable cursor/value pair for a document. Speculative productions commit
+// their cursor only on success; no combinators or per-token result allocations.
+class Scanner<T> {
+  p = 0
+  value: any
+  private input: string
+  private end: number
+  private readonly mapper: Mapper<T>
+  private readonly join: Function
+  private inlinePluginName: string | null = null
+  private inlinePluginArgs = ''
+  private lineTokens: any[] = []
+  private linePlugins: { index: number; name: string; args: string }[] = []
+
+  constructor(
+    private readonly owner: Parser<T>,
+    input: string
+  ) {
+    this.input = input
+    this.end = input.length
+    this.mapper = owner.opts.export.mapper
+    this.join = owner.opts.export.join
+  }
+
+  private c(i: number): number {
+    return this.input.charCodeAt(i)
+  }
+
+  private lineEnd(i: number): number {
+    while (i < this.end && this.c(i) !== 13 && this.c(i) !== 10) i++
+    return i
+  }
+
+  private newline(i: number): number {
+    if (this.c(i) === 13) return this.c(i + 1) === 10 ? i + 2 : i + 1
+    return this.c(i) === 10 ? i + 1 : i
+  }
+
+  private skipSpace(i: number, fullWidth = true): number {
+    while (i < this.end && whitespace(this.c(i)) && (fullWidth || this.c(i) !== 12288)) i++
+    return i
+  }
+
+  private run(i: number, code: number): number {
+    while (this.c(i) === code) i++
+    return i
+  }
+
+  private node(tag: string, children: any, attributes?: any): any {
+    return this.mapper(tag, attributes)(children)
+  }
+
+  private codeNode(content: any): any {
+    // Only Markdown code is literal text. Raw HTML (including <code>) keeps
+    // its passthrough semantics, and custom/AST exporters receive source text.
+    return this.node('code', this.mapper === (asHTML.mapper as Mapper<any>) ? content.replace(/[&<>]/g, codeEntity) : content)
+  }
+
+  private plugin(block: boolean): boolean {
+    const start = this.p
+    if (this.c(start) !== 64 || this.c(start + 1) !== 91) return false
+    let i = start + 2
+    while (letter(this.c(i))) i++
+    if (i === start + 2) return false
+    const nameEnd = i
+    if (block && this.c(i) !== 58 && this.c(i) !== 93) return false
+    if (!block && this.c(i) === 58) i++
+    const argsStart = i
+    while (i < this.end && this.c(i) !== 93) i++
+    if (i === this.end) return false
+    const args = this.input.slice(argsStart, i)
+    const name = this.input.slice(start + 2, nameEnd)
+    let content: any = null
+    let close = ']'
+    if (block) {
+      if (this.c(i + 1) !== 10) return false
+      i += 2
+      const lines: any[] = []
+      while (this.c(i) === 32 && this.c(i + 1) === 32) {
+        const end = this.lineEnd(i + 2)
+        if (end === i + 2) break
+        lines.push(this.join(['', this.input.slice(i + 2, end), '\n']))
+        i = this.newline(end)
+      }
+      if (lines.length === 0) return false
+      content = this.join(lines)
+      close = ']\n'
+    } else i++
+    this.p = i
+    const plugin = this.owner.opts.plugins && this.owner.opts.plugins[name]
+    if (!block) {
+      this.inlinePluginName = name
+      this.inlinePluginArgs = args
+    }
+    this.value = plugin
+      ? plugin(args, content, this.mapper, this.join)
+      : this.join(block ? ['@[', name, args, close, content] : ['@[', name, args, close])
+    return true
+  }
+
+  private link(image: boolean): boolean {
+    const start = this.p
+    const labelStart = start + (image ? 2 : 1)
+    if (this.c(start) !== (image ? 33 : 91) || (image && this.c(start + 1) !== 91)) return false
+    let i = labelStart
+    while (i < this.end && this.c(i) !== 93 && this.c(i) !== 13 && this.c(i) !== 10) i++
+    if (i === labelStart || this.c(i) !== 93 || this.c(i + 1) !== 40) return false
+    const labelEnd = i
+    const targetStart = (i += 2)
+    while (i < this.end && this.c(i) !== 41 && this.c(i) !== 13 && this.c(i) !== 10) i++
+    if (i === targetStart || this.c(i) !== 41) return false
+    const label = this.input.slice(labelStart, labelEnd)
+    const target = this.input.slice(targetStart, i)
+    this.p = i + 1
+    this.value = image ? this.node('img', null, { src: target, alt: label }) : this.node('a', label, { href: target })
+    return true
+  }
+
+  private emphasis(): boolean {
+    const start = this.p
+    const c = this.c(start)
+    if (c !== 42 && c !== 95) return false
+    let width = 1
+    let i = start + 1
+    if (this.c(i) === c) {
+      width = 2
+      i++
+    }
+    const textStart = i
+    while (i < this.end && plain(this.c(i))) i++
+    if (i === textStart || (this.c(i) !== 42 && this.c(i) !== 95)) return false
+    if (width === 2 && this.c(i + 1) !== this.c(i)) return false
+    this.p = i + width
+    this.value = this.node(width === 1 ? 'em' : 'strong', this.input.slice(textStart, i))
+    return true
+  }
+
+  private code(): boolean {
+    const start = this.p
+    if (this.c(start) !== 96) return false
+    const textStart = this.run(start, 96)
+    const width = textStart - start
+    let i = textStart
+    while (i < this.end && this.c(i) !== 13 && this.c(i) !== 10) {
+      if (this.c(i) !== 96) {
+        i++
+        continue
+      }
+      const end = this.run(i, 96)
+      if (end - i === width) {
+        let a = textStart,
+          b = i
+        if (this.c(a) === 32 && this.c(b - 1) === 32 && this.skipSpace(a) < b) {
+          a++
+          b--
+        }
+        this.p = end
+        this.value = this.codeNode(this.input.slice(a, b))
+        return true
+      }
+      i = end
+    }
+    return false
+  }
+
+  private math(): boolean {
+    const start = this.p
+    if (this.c(start) !== 36 || this.c(start + 1) === 36) return false
+    let i = start + 1
+    while (i < this.end && this.c(i) !== 36 && this.c(i) !== 13 && this.c(i) !== 10) i++
+    if (i === start + 1 || this.c(i) !== 36) return false
+    this.p = i + 1
+    this.value = this.input.slice(start, i + 1)
+    return true
+  }
+
+  private ruby(): boolean {
+    const start = this.p
+    if (this.c(start) !== 65372) return false
+    let i = start + 1
+    while (i < this.end && this.c(i) !== 12298) i++
+    if (i === start + 1 || i === this.end) return false
+    const baseEnd = i++
+    const rubyStart = i
+    while (i < this.end && this.c(i) !== 12299) i++
+    if (i === rubyStart || i === this.end) return false
+    this.p = i + 1
+    this.value = this.node(
+      'ruby',
+      this.join([this.input.slice(start + 1, baseEnd), this.node('rt', this.input.slice(rubyStart, i))])
+    )
+    return true
+  }
+
+  private footnoteRef(): boolean {
+    const start = this.p
+    if (this.c(start) !== 91 || this.c(start + 1) !== 94) return false
+    let i = start + 2
+    while (digit(this.c(i))) i++
+    if (i === start + 2 || this.c(i) !== 93 || this.c(i + 1) === 58) return false
+    const id = this.input.slice(start + 2, i)
+    this.p = i + 1
+    this.value = this.node('footnote-ref', id, { id })
+    return true
+  }
+
+  private selfClosing(): boolean {
+    const start = this.p
+    if (this.c(start) !== 60) return false
+    const b = this.c(start + 1)
+    if ((b !== 98 && b !== 104) || this.c(start + 2) !== 114) return false
+    let i = this.skipSpace(start + 3)
+    if (this.c(i) === 47) i++
+    if (this.c(i) !== 62) return false
+    this.p = i + 1
+    this.value = this.node(b === 98 ? 'br' : 'hr', null)
+    return true
+  }
+
+  private html(): boolean {
+    const start = this.p
+    if (this.c(start) !== 60 || !letter(this.c(start + 1))) return false
+    let i = start + 2
+    while (letter(this.c(i)) || digit(this.c(i))) i++
+    const tagEnd = i
+    if (whitespace(this.c(i))) {
+      while (i < this.end && this.c(i) !== 62) i++
+    }
+    if (this.c(i) !== 62) return false
+    const tag = this.input.slice(start + 1, tagEnd)
+    this.p = i + 1
+    const children: any[] = []
+    while (this.p < this.end) {
+      if (this.c(this.p) === 60) {
+        if (this.html() || this.selfClosing()) {
+          children.push(this.value)
+          continue
+        }
+        break
+      }
+      const textStart = this.p
+      while (this.p < this.end && this.c(this.p) !== 60) this.p++
+      children.push(this.input.slice(textStart, this.p))
+    }
+    i = this.p
+    if (this.c(i) !== 60 || this.c(i + 1) !== 47 || !letter(this.c(i + 2))) {
+      this.p = start
+      return false
+    }
+    const closeStart = (i += 2)
+    while (letter(this.c(i)) || digit(this.c(i))) i++
+    if (this.c(i) !== 62) {
+      this.p = start
+      return false
+    }
+    const closeTag = this.input.slice(closeStart, i)
+    this.p = i + 1
+    this.value =
+      tag.toLowerCase() === closeTag.toLowerCase()
+        ? this.node(tag, this.join(children))
+        : this.join(['<' + tag + '>', ...children, '</' + closeTag + '>'])
+    return true
+  }
+
+  private inline(context: InlineContext): boolean {
+    const start = this.p
+    if (start >= this.end) return false
+    const c = this.c(start)
+    switch (c) {
+      case 64:
+        if ((context === 0 || context === 2) && this.plugin(false)) return true
+        break
+      case 65372:
+        if ((context === 0 || context === 2) && this.ruby()) return true
+        break
+      case 91:
+        if (context === 0 && this.footnoteRef()) return true
+        if (this.link(false)) return true
+        break
+      case 33:
+        if (this.link(true)) return true
+        break
+      case 42:
+      case 95:
+        if (this.emphasis()) return true
+        break
+      case 96:
+        if (this.code()) return true
+        break
+      case 36:
+        if (context !== 3 && this.math()) return true
+        break
+      case 60:
+        if ((context === 0 || context === 2) && (this.selfClosing() || this.html())) return true
+        break
+    }
+    let i = start
+    while (i < this.end && textChar(this.c(i), context)) i++
+    if (i > start) {
+      this.p = i
+      this.value = this.input.slice(start, i)
+      return true
+    }
+    if (context === 3 || c === 13 || c === 10 || c === 8232 || c === 8233) return false
+    this.p = start + 1
+    this.value = this.input[start]
+    return true
+  }
+
+  private inlines(context: InlineContext): boolean {
+    const values: any[] = []
+    const plugins: { index: number; name: string; args: string }[] = []
+    while (true) {
+      this.inlinePluginName = null
+      if (!this.inline(context)) break
+      if (context === 0 && this.inlinePluginName !== null) {
+        plugins.push({ index: values.length, name: this.inlinePluginName, args: this.inlinePluginArgs })
+      }
+      values.push(this.value)
+    }
+    if (context !== 1 && values.length === 0) return false
+    if (context === 0) {
+      this.lineTokens = values
+      this.linePlugins = plugins
+    }
+    this.value = this.join(values)
+    return true
+  }
+
+  private heading(): boolean {
+    const start = this.p
+    let i = start
+    // The setext title uses dot, excluding U+2028/U+2029 as well as CR/LF.
+    while (i < this.end && this.c(i) !== 10 && this.c(i) !== 13 && this.c(i) !== 8232 && this.c(i) !== 8233) i++
+    if (this.c(i) === 10 && (this.c(i + 1) === 61 || this.c(i + 1) === 45)) {
+      const marker = this.c(i + 1)
+      const after = this.run(i + 1, marker)
+      if (after === this.end || this.c(after) === 10) {
+        this.p = after === this.end ? after : after + 1
+        this.value = this.node(marker === 61 ? 'h1' : 'h2', this.input.slice(start, i))
+        return true
+      }
+    }
+    if (this.c(start) !== 35) return false
+    const hashes = this.run(start, 35) - start
+    for (let level = Math.min(hashes, 6); level >= 1; level--) {
+      i = start + level
+      let spaceStart = i
+      if (!whitespace(this.c(spaceStart))) {
+        // The old /\s+/m can find whitespace at a later line boundary,
+        // but consumes only its length, ignoring the regex match offset.
+        while (spaceStart < this.end) {
+          const before = this.c(spaceStart - 1)
+          if ((before === 10 || before === 13 || before === 8232 || before === 8233) && whitespace(this.c(spaceStart)))
+            break
+          spaceStart++
+        }
+        if (spaceStart === this.end) continue
+      }
+      i += this.skipSpace(spaceStart) - spaceStart
+      const textStart = i
+      while (i < this.end && plain(this.c(i))) i++
+      if (i === textStart) continue
+      this.p = this.skipSpace(i, false)
+      this.value = this.node('h' + level, this.input.slice(textStart, i))
+      return true
+    }
+    return false
+  }
+
+  private tableRow(i: number): number {
+    if (this.c(i) !== 124) return -1
+    let last = -1
+    for (let j = i + 1; j < this.end && this.c(j) !== 13 && this.c(j) !== 10; j++) {
+      if (this.c(j) === 124 && j >= i + 2) last = j + 1
+    }
+    return last
+  }
+
+  private separator(start: number, end: number): boolean {
+    let i = start + 1
+    while (i < end) {
+      i = this.skipSpace(i)
+      if (this.c(i) === 58) i++
+      const dash = i
+      i = this.run(i, 45)
+      if (i === dash) return false
+      if (this.c(i) === 58) i++
+      i = this.skipSpace(i)
+      if (this.c(i) !== 124) return false
+      i++
+      if (i === end) return true
+    }
+    return false
+  }
+
+  private cells(start: number, end: number, tag: string): any {
+    const cells: any[] = []
+    let text = ''
+    let segment = start + 1
+    for (let i = segment; i < end - 1; i++) {
+      const c = this.c(i)
+      if (c === 92 && i + 1 < end - 1) {
+        text += this.input.slice(segment, i)
+        text += this.c(i + 1) === 124 ? '|' : this.input.slice(i, i + 2)
+        i++
+        segment = i + 1
+      } else if (c === 124) {
+        cells.push(this.cell(text + this.input.slice(segment, i), tag))
+        text = ''
+        segment = i + 1
+      }
+    }
+    cells.push(this.cell(text + this.input.slice(segment, end - 1), tag))
+    return this.node('tr', this.join(cells))
+  }
+
+  private cell(content: string, tag: string): any {
+    const text = content.trim()
+    if (!text) return this.node(tag, '')
+    // Temporarily switch input to the independently unescaped cell, reusing
+    // this parse's state. Restore it even if a custom exporter throws.
+    const input = this.input,
+      end = this.end,
+      position = this.p
+    let contentValue: any
+    try {
+      this.input = text
+      this.end = text.length
+      this.p = 0
+      const ok = this.inlines(3)
+      contentValue = ok && this.p === this.end ? this.value : text
+    } finally {
+      this.input = input
+      this.end = end
+      this.p = position
+    }
+    return this.node(tag, contentValue)
+  }
+
+  private table(): boolean {
+    const start = this.p
+    const headerEnd = this.tableRow(start)
+    if (headerEnd < 0 || this.newline(headerEnd) === headerEnd) return false
+    const sepStart = this.newline(headerEnd)
+    const sepEnd = this.tableRow(sepStart)
+    if (sepEnd < 0 || this.newline(sepEnd) === sepEnd) return false
+    let i = this.newline(sepEnd)
+    const ranges: number[] = []
+    let rowEnd: number
+    while ((rowEnd = this.tableRow(i)) >= 0) {
+      ranges.push(i, rowEnd)
+      i = this.newline(rowEnd)
+    }
+    this.p = i
+    if (!this.separator(sepStart, sepEnd)) {
+      this.value = { status: false, index: -1, value: null, furthest: 0, expected: ['Not a valid table separator'] }
+      return true
+    }
+    const rows: any[] = [this.cells(start, headerEnd, 'th')]
+    for (let j = 0; j < ranges.length; j += 2) rows.push(this.cells(ranges[j], ranges[j + 1], 'td'))
+    this.value = this.node('table', this.join(rows))
+    return true
+  }
+
+  private fence(): boolean {
+    const start = this.p
+    if (this.c(start) !== 96) return false
+    const openerEnd = this.run(start, 96)
+    const width = openerEnd - start
+    if (width < 3) return false
+    let i = openerEnd
+    while (i < this.end && this.c(i) !== 96 && this.c(i) !== 13 && this.c(i) !== 10) i++
+    const definitionEnd = i
+    if (this.newline(i) === i) return false
+    i = this.newline(i)
+    const code: string[] = []
+    while (i < this.end) {
+      const afterRun = this.run(i, 96)
+      let after = afterRun
+      while (this.c(after) === 32 || this.c(after) === 9) after++
+      if (afterRun - i >= width && (after === this.end || this.c(after) === 13 || this.c(after) === 10)) {
+        while (
+          code.length &&
+          (code[code.length - 1] === '\n' || code[code.length - 1] === '\r' || code[code.length - 1] === '\r\n')
+        )
+          code.pop()
+        this.p = after
+        const definition = this.input.slice(openerEnd, definitionEnd)
+        const value = this.codeNode(this.join(code))
+        this.value =
+          definition === '' ? this.node('pre', value) : this.node('pre', value, { 'data-language': definition })
+        return true
+      }
+      const end = this.lineEnd(i)
+      if (end !== i) code.push(this.input.slice(i, end))
+      const next = this.newline(end)
+      if (next !== end) code.push(this.input.slice(end, next))
+      i = next
+    }
+    return false
+  }
+
+  private mathBlock(): boolean {
+    const start = this.p
+    if (this.c(start) !== 36 || this.c(start + 1) !== 36) return false
+    let i = start + 2
+    while (i < this.end && (this.c(i) !== 36 || this.c(i + 1) !== 36)) i++
+    if (i === this.end) return false
+    const next = this.newline(i + 2)
+    if (next === i + 2 && next !== this.end) return false
+    this.p = next
+    this.value = '$$' + this.input.slice(start + 2, i).trim() + '$$'
+    return true
+  }
+
+  private footnote(): boolean {
+    const start = this.p
+    if (this.c(start) !== 91 || this.c(start + 1) !== 94) return false
+    let i = start + 2
+    while (digit(this.c(i))) i++
+    if (i === start + 2 || this.c(i) !== 93 || this.c(i + 1) !== 58) return false
+    const id = this.input.slice(start + 2, i)
+    i = this.skipSpace(i + 2)
+    let end = this.lineEnd(i)
+    const lines = [this.input.slice(i, end)]
+    while (this.newline(end) !== end) {
+      const next = this.newline(end)
+      let textStart = next
+      if (this.c(next) === 9) textStart++
+      else if (this.input.startsWith('    ', next)) textStart += 4
+      else break
+      end = this.lineEnd(textStart)
+      lines.push(this.input.slice(textStart, end))
+    }
+    this.p = this.newline(end)
+    this.value = this.node('footnote-def', lines.join('\n').trim(), { id })
+    return true
+  }
+
+  private list(): boolean {
+    const start = this.p
+    let previous = 1
+    let count = 0
+    let firstType: 'ul' | 'ol' = 'ul'
+    while (this.p < this.end) {
+      const lineStart = this.p
+      let i = lineStart
+      while (this.c(i) === 32 && this.c(i + 1) === 32) i += 2
+      const marker = i
+      let type: 'ul' | 'ol'
+      if ((this.c(i) === 45 || this.c(i) === 42) && this.c(i + 1) === 32) {
+        type = 'ul'
+        i += 2
+      } else {
+        while (digit(this.c(i))) i++
+        if (i === marker || this.c(i) !== 46 || this.c(i + 1) !== 32) break
+        type = 'ol'
+        i += 2
+      }
+      // Parsimmon's P.index counts CRLF as one linebreak, and CR alone too.
+      let line = marker
+      while (line > 0 && this.c(line - 1) !== 10 && this.c(line - 1) !== 13) line--
+      const column = marker - line + 1
+      this.p = i
+      this.inlines(1)
+      const text = this.value
+      this.p = this.newline(this.p)
+      if (column % 2 !== 1) {
+        resetTree(this.owner)
+        this.p = lineStart
+        break
+      }
+      if (count === 0) firstType = type
+      const node: ListTree = { value: text, children: [], type, parent: this.owner.currentTree }
+      if (previous < column) {
+        this.owner.currentTree = this.owner.currentTree.children[this.owner.currentTree.children.length - 1]
+        node.parent = this.owner.currentTree
+      } else if (previous > column) {
+        for (let step = 0; step < (previous - column) / 2; step++) {
+          if (this.owner.currentTree.parent !== null) this.owner.currentTree = this.owner.currentTree.parent
+        }
+        node.parent = this.owner.currentTree
+      }
+      this.owner.currentTree.children.push(node)
+      previous = column
+      count++
+    }
+    if (!count) {
+      this.p = start
+      return false
+    }
+    this.owner.rootTree.type = firstType
+    this.value = this.listTree(this.owner.rootTree)
+    resetTree(this.owner)
+    return true
+  }
+
+  private listTree(tree: ListTree): any {
+    const children = tree.children.map((child) => this.listTree(child))
+    if (tree.type === 'shadow') return this.join(children)
+    if (tree.value !== null) {
+      return this.node(
+        'li',
+        children.length ? this.join([tree.value, this.node(tree.children[0].type, this.join(children))]) : tree.value
+      )
+    }
+    return this.node(tree.type, this.join(children))
+  }
+
+  private quote(): boolean {
+    const start = this.p
+    let depth = 0
+    const root: QuoteTree = { text: null, children: [] }
+    let current = root
+    let count = 0
+    while (this.c(this.p) === 62 && this.c(this.p + 1) === 32) {
+      const lineStart = this.p
+      let level = -1
+      while (this.c(this.p) === 62 && this.c(this.p + 1) === 32) {
+        level++
+        this.p += 2
+      }
+      if (!this.inlines(2)) {
+        this.p = lineStart
+        break
+      }
+      const text = this.value
+      this.p = this.newline(this.p)
+      const node: QuoteTree = { text, children: [], parent: current }
+      if (level < depth) {
+        for (let step = 0; step < depth - level; step++) if (current.parent) current = current.parent
+        node.parent = current
+        current.children.push(node)
+        depth = level
+      } else if (level > depth) {
+        const shadow: QuoteTree = { text: null, children: [node], parent: current }
+        node.parent = shadow
+        current.children.push(shadow)
+        current = shadow
+        depth = level
+      } else current.children.push(node)
+      count++
+    }
+    if (!count) {
+      this.p = start
+      return false
+    }
+    this.value = this.quoteTree(root)
+    return true
+  }
+
+  private quoteTree(tree: QuoteTree): any {
+    const values: any[] = []
+    for (let i = 0; i < tree.children.length; i++) {
+      const node = tree.children[i]
+      if (node.text !== null)
+        values.push(tree.children[i + 1]?.text != null ? this.join([node.text, this.node('br', null)]) : node.text)
+      else if (node.children.length) values.push(this.quoteTree(node))
+    }
+    return this.node(
+      'blockquote',
+      values.reduce((a, b) => this.join([a, b]))
+    )
+  }
+
+  private fenceAhead(start: number): boolean {
+    if (this.c(start) !== 96) return false
+    const end = this.run(start, 96)
+    const width = end - start
+    if (width < 3) return false
+    let i = end
+    while (i < this.end && this.c(i) !== 96 && this.c(i) !== 13 && this.c(i) !== 10) i++
+    if (this.c(i) !== 10) return false
+    // Legacy lookahead needs LF immediately before the closing run, and is
+    // intentionally different from the actual fence's whole-line rule.
+    for (i++; i < this.end; i++) {
+      if (this.c(i) === 10 && this.c(i + 1) === 96) {
+        const after = this.run(i + 1, 96)
+        if (after - i - 1 >= width) return true
+        i = after - 1
+      }
+    }
+    return false
+  }
+
+  private paragraph(): boolean {
+    const lines: any[] = []
+    const breaks: any[] = []
+    let lastEnd = this.p
+    let lastTokens: any[] = []
+    let lastPlugins: { index: number; name: string; args: string }[] = []
+    while (true) {
+      const start = this.p
+      if (!this.inlines(0)) {
+        this.p = start
+        break
+      }
+      lastEnd = this.p
+      lastTokens = this.lineTokens
+      lastPlugins = this.linePlugins
+      lines.push(this.value)
+      const end = this.p
+      const next = this.newline(end)
+      if (next === end || this.fenceAhead(next)) break
+      this.p = next
+      // The recursive paragraph must have content, otherwise the linebreak
+      // belongs to the next block separator, not to this paragraph.
+      if (next === this.end || this.c(next) === 13 || this.c(next) === 10) {
+        this.p = end
+        break
+      }
+      breaks.push(this.node('br', null))
+    }
+    if (!lines.length) return false
+    // The legacy final-line alternative reruns plugin callbacks. Replay only
+    // these effects on the saved tokens; never scan the line a second time.
+    this.p = lastEnd
+    for (const token of lastPlugins) {
+      const plugin = this.owner.opts.plugins && this.owner.opts.plugins[token.name]
+      lastTokens[token.index] = plugin
+        ? plugin(token.args, null, this.mapper, this.join)
+        : this.join(['@[', token.name, token.args, ']'])
+    }
+    let result = this.join(lastTokens)
+    for (let i = lines.length - 2; i >= 0; i--) result = this.join([lines[i], breaks[i], result])
+    this.value = this.node('p', result)
+    return true
+  }
+
+  parse(): ParseSuccess<T> | ParseFailure {
+    const blocks: any[] = []
+    while (this.p < this.end) {
+      const start = this.p
+      const afterSpace = this.skipSpace(start, false)
+      if (afterSpace !== start) {
+        this.p = afterSpace
+        blocks.push('')
+        continue
+      }
+      if (
+        this.plugin(true) ||
+        this.heading() ||
+        this.table() ||
+        this.fence() ||
+        this.mathBlock() ||
+        this.footnote() ||
+        this.list() ||
+        this.quote() ||
+        this.paragraph()
+      ) {
+        blocks.push(this.value)
+        continue
+      }
+      let line = 1,
+        column = 1
+      for (let i = 0; i < start; i++) {
+        if (this.c(i) === 13 || (this.c(i) === 10 && this.c(i - 1) !== 13)) {
+          line++
+          column = 1
+        } else if (this.c(i) !== 10) column++
+      }
+      return { status: false, index: { offset: start, line, column }, expected: ['EOF'] }
+    }
+    return { status: true, value: this.join(blocks) }
+  }
+}
+
+function resetTree<T>(owner: Parser<T>) {
+  owner.rootTree = owner.currentTree = { value: null, children: [], type: 'shadow', parent: null }
+}
+
 export class Parser<T> {
   liLevelBefore: number | null = null
   liLevel: number | null = null
-  rootTree: ListTree = {
-    value: null,
-    children: [],
-    type: 'shadow',
-    parent: null,
-  }
-  currentTree: ListTree = {
-    value: null,
-    children: [],
-    type: 'shadow',
-    parent: null,
-  }
-  acceptables!: P.Parser<T>
-  constructor(
-    public opts: {
-      export: ExportType<T>
-      plugins?: { [pluginName: string]: Plugin<T> }
-    }
-  ) {
+  rootTree!: ListTree
+  currentTree!: ListTree
+  acceptables!: { parse: (input: string) => ParseSuccess<T> | ParseFailure }
+
+  constructor(public opts: { export: ExportType<T>; plugins?: { [pluginName: string]: Plugin<T> } }) {
+    resetTree(this)
     this.create()
   }
+
   create() {
-    function flags(re: RegExp) {
-      var s = '' + re
-      return s.slice(s.lastIndexOf('/') + 1)
-    }
-
-    function ignore(re: RegExp, group = 0) {
-      const { makeSuccess, makeFailure } = P as any
-
-      const anchored = RegExp('^(?:' + re.source + ')', flags(re))
-      const expected = '' + re
-      return (P as any)(function (input: string, i: number) {
-        var match = anchored.exec(input.slice(i))
-        if (match) {
-          var fullMatch = match[0]
-          var groupMatch = match[group]
-          if (groupMatch != null) {
-            return makeFailure(i + fullMatch.length, groupMatch)
-          }
-        }
-        return makeSuccess(i, expected)
-      })
-    }
-
-    const whitespace = P.regexp(/\s+/m)
-    const asterisk = P.string('*')
-    const sharp = P.string('#')
-    const plainStr = P.regexp(/[^`_\*\r\n]+/)
-    const linebreak = P.string('\r\n').or(P.string('\n')).or(P.string('\r'))
-    const equal = P.string('=')
-    const minus = P.string('-')
-
-    const join: any = this.opts.export.join
-    const mapper = this.opts.export.mapper
-    const token = (p: P.Parser<any>) => {
-      // Skip trailing whitespace EXCEPT full-width space U+3000, so the next
-      // block's Japanese-style leading indentation is preserved.
-      return p.skip(P.regexp(/[^\S\u3000]*/m))
-    }
-    const h1Special = P.regexp(/^(.*)\n\=+/, 1)
-      .skip(P.alt(P.eof, P.string('\n')))
-      .map(mapper('h1'))
-    const h2Special = P.regexp(/^(.*)\n\-+/, 1)
-      .skip(P.alt(P.eof, P.string('\n')))
-      .map(mapper('h2'))
-    const h1 = token(P.seq(sharp, whitespace).then(plainStr)).map(mapper('h1'))
-    const h2 = token(P.seq(sharp.times(2), whitespace).then(plainStr)).map(mapper('h2'))
-    const h3 = token(P.seq(sharp.times(3), whitespace).then(plainStr)).map(mapper('h3'))
-    const h4 = token(P.seq(sharp.times(4), whitespace).then(plainStr)).map(mapper('h4'))
-    const h5 = token(P.seq(sharp.times(5), whitespace).then(plainStr)).map(mapper('h5'))
-    const h6 = token(P.seq(sharp.times(6), whitespace).then(plainStr)).map(mapper('h6'))
-
-    const strongStart = P.string('**').or(P.string('__'))
-    const strongEnd = strongStart
-    const strong = strongStart.then(plainStr).map(mapper('strong')).skip(strongEnd)
-
-    const emStart = P.string('*').or(P.string('_'))
-    const emEnd = emStart
-    const em = emStart.then(plainStr).map(mapper('em')).skip(emEnd)
-
-    const anchor = P.seqMap(
-      P.string('['),
-      P.regexp(/[^\]\r\n]+/),
-      P.string(']('),
-      P.regexp(/[^\)\r\n]+/),
-      P.string(')'),
-      (_1, label, _2, href, _3) => {
-        return mapper('a', { href })(label)
-      }
-    )
-
-    const img = P.seqMap(
-      P.string('!['),
-      P.regexp(/[^\]\r\n]+/),
-      P.string(']('),
-      P.regexp(/[^\)\r\n]+/),
-      P.string(')'),
-      (_1, alt, _2, src, _3) => {
-        return mapper('img', { src, alt })(null)
-      }
-    )
-
-    // Code span per https://spec.commonmark.org/0.31.2/#code-spans : opens
-    // with a run of backticks and closes with a run of the same length, so a
-    // run of any other length is content: `` ` ``. The (?!`) guards keep
-    // backtracking from splitting a run into a shorter opener/closer.
-    const code = P.regexp(/(`+)(?!`)((?:[^`\r\n]|(?!\1(?!`))`+(?!`))*)\1(?!`)/, 2)
-      .map((content) =>
-        // One space of padding is stripped so a span can start/end with a
-        // backtick: `` ` `` -> `
-        content.startsWith(' ') && content.endsWith(' ') && content.trim() !== ''
-          ? content.slice(1, -1)
-          : content
-      )
-      .map(mapper('code'))
-
-    const pluginInline = P.seqMap(
-      P.string('@['),
-      P.regexp(/[a-zA-Z]+/),
-      P.regexp(/:{0,1}([^\]]*)/, 1),
-      P.string(']'),
-      (_1, pluginName, args, _2) => {
-        return this.opts.plugins && this.opts.plugins[pluginName]
-          ? this.opts.plugins[pluginName](args, null, mapper, join)
-          : join([_1, pluginName, args, _2])
-      }
-    )
-
-    // Aozora bunko ruby format: ｜text《ruby》
-    const aozoraRuby = P.seqMap(
-      P.string('｜'),
-      P.regexp(/[^《]+/),
-      P.string('《'),
-      P.regexp(/[^》]+/),
-      P.string('》'),
-      (_pipe, base, _open, ruby, _close) => {
-        return mapper('ruby')(join([base, mapper('rt')(ruby)]))
-      }
-    )
-
-    // HTML element parser - converts <tag>content</tag> to AST format
-    const htmlSelfClosing = P.regexp(/<(br|hr)\s*\/?>/).map((match) => {
-      const tag = match.match(/<(\w+)/)?.[1] || 'br'
-      return mapper(tag)(null)
-    })
-
-    const htmlElement: P.Parser<T> = P.lazy(() => {
-      // Match opening tag with optional attributes
-      const openTag = P.regexp(/<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^>]*)?)>/, 1)
-      // Content can include nested HTML elements or text
-      const content = P.alt(htmlElement, htmlSelfClosing, P.regexp(/[^<]+/)).many()
-
-      return P.seqMap(
-        openTag,
-        P.index,
-        content,
-        P.regexp(/<\/([a-zA-Z][a-zA-Z0-9]*)>/, 1),
-        (tag, _idx, children, closeTag) => {
-          if (tag.toLowerCase() !== closeTag.toLowerCase()) {
-            // Mismatched tags - return as text
-            return join(['<' + tag + '>', ...children, '</' + closeTag + '>'])
-          }
-          return mapper(tag)(join(children))
-        }
-      )
-    })
-
-    // Footnote reference: [^1], [^2], etc.
-    const footnoteRef = P.seqMap(
-      P.string('[^'),
-      P.regexp(/[0-9]+/),
-      P.string(']').notFollowedBy(P.string(':')),
-      (_1, num, _3) => {
-        return mapper('footnote-ref', { id: num })(num)
-      }
-    )
-
-    // Math expressions - output raw $...$ for MathJax to process
-    // Inline math: $...$
-    const mathInline = P.seqMap(
-      P.string('$').notFollowedBy(P.string('$')),
-      P.regexp(/[^\$\r\n]+/),
-      P.string('$'),
-      (_1, content, _3) => {
-        // Output raw $...$ for MathJax auto-detection
-        return '$' + content + '$'
-      }
-    )
-
-    const inline = P.alt(
-      pluginInline,
-      aozoraRuby,
-      footnoteRef,
-      anchor,
-      img,
-      em,
-      strong,
-      code,
-      mathInline,
-      htmlSelfClosing,
-      htmlElement,
-      P.regexp(/[^\r\n<=-\[\]\*\`\@｜\$]+/),
-      P.regexp(/./)
-    )
-
-    // Table cell content - supports inline elements. Cells are already split
-    // at unescaped pipes, so a `|` here is unescaped content and stays plain.
-    const tableCellInline = P.alt(anchor, img, em, strong, code, P.regexp(/[^\r\n\[\]\*`]+/))
-
-    // Parse a single table row: |cell|cell|cell| with flexible spacing
-    const parseTableRow = (input: string): string[] => {
-      // Remove leading/trailing pipes and split by pipe
-      const trimmed = input.trim()
-      if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
-        return []
-      }
-      // Remove first and last pipe, then split at unescaped pipes.
-      // Per GFM, `\|` is a literal `|` even inside a code span:
-      // https://github.github.com/gfm/#tables-extension-
-      const inner = trimmed.slice(1, -1)
-      const cells: string[] = []
-      let current = ''
-      for (let i = 0; i < inner.length; i++) {
-        const ch = inner[i]
-        if (ch === '\\' && inner[i + 1] === '|') {
-          current += '|'
-          i++
-        } else if (ch === '\\' && i + 1 < inner.length) {
-          current += ch + inner[i + 1]
-          i++
-        } else if (ch === '|') {
-          cells.push(current.trim())
-          current = ''
-        } else {
-          current += ch
-        }
-      }
-      cells.push(current.trim())
-      return cells
-    }
-
-    // Table row regex - matches |...|
-    const tableRowLine = P.regexp(/^\|[^\r\n]+\|/, 0)
-
-    // Separator row pattern - matches |---|---|---| with optional alignment markers
-    const separatorRowPattern = /^\|\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|$/
-
-    // Check if a row is a separator row
-    const isSeparatorRow = (row: string): boolean => {
-      return separatorRowPattern.test(row.trim())
-    }
-
-    // Parse cell content with inline elements
-    const parseCellContent = (content: string): any => {
-      if (!content || content.trim() === '') {
-        return ''
-      }
-      const cellParser = tableCellInline.atLeast(1).map(join)
-      const result = cellParser.parse(content.trim())
-      if (result.status) {
-        return result.value
-      }
-      return content.trim()
-    }
-
-    // Table parser
-    const table = P.seqMap(
-      tableRowLine.skip(linebreak),
-      tableRowLine.skip(linebreak),
-      tableRowLine.skip(linebreak.atMost(1)).atLeast(0),
-      (headerLine, sepLine, bodyLines) => {
-        // Validate separator row
-        if (!isSeparatorRow(sepLine)) {
-          return P.makeFailure(0, 'Not a valid table separator') as any
-        }
-
-        const headerCells = parseTableRow(headerLine)
-        const bodyCells = bodyLines.map(parseTableRow)
-
-        if (headerCells.length === 0) {
-          return P.makeFailure(0, 'No header cells') as any
-        }
-
-        const headerRow = mapper('tr')(join(headerCells.map((h) => mapper('th')(parseCellContent(h)))))
-        const bodyRows = bodyCells.map((row) =>
-          mapper('tr')(join(row.map((cell) => mapper('td')(parseCellContent(cell)))))
-        )
-        return mapper('table')(join([headerRow, ...bodyRows]))
-      }
-    )
-
-    const inlines = inline.atLeast(1).map(join)
-    const paragraphBegin = inlines
-    // \1 keeps this lookahead consistent with codeBlock: a shorter backtick
-    // run does not close the fence, so it must not end a paragraph either.
-    const paragraphEnd = ignore(/(`{3,})[^`\r\n]*\n[\s\S]*?\n\1/)
-    const paragraphLine: P.Parser<T> = P.lazy(() =>
-      P.alt(
-        P.seq(paragraphBegin, linebreak.skip(paragraphEnd).result(mapper('br')(null)), paragraphLine).map(join),
-        inlines
-      )
-    ) as P.Parser<T>
-    const paragraph = paragraphLine.map(mapper('p'))
-
-    const listIndent = P.string('  ')
-    // List item content - supports inline elements including math
-    const liInlineContent = P.alt(
-      mathInline,
-      anchor,
-      img,
-      em,
-      strong,
-      code,
-      P.regexp(/[^\r\n\[\]\*\`\$]+/),
-      P.regexp(/./)
-    )
-    const liSingleLine = liInlineContent.atLeast(0).map(join)
-
-    const ulStart = P.string('- ').or(P.string('* '))
-    const olStart = P.regexp(/[0-9]+\. /)
-
-    let liLevel: number[] = [1]
-    let counter: number = 0
-    const initializeList = () => {
-      this.rootTree = this.currentTree = {
-        value: null,
-        children: [],
-        type: 'shadow',
-        parent: null,
-      }
-      liLevel = [1]
-      counter = 0
-    }
-    const listLineContent = () => {
-      return P.seqMap(listIndent.many(), P.index, ulStart.or(olStart), liSingleLine, (_1, index, start, str) => {
-        let nodeType: 'ul' | 'ol'
-        // detect which types of content
-        liLevel.push(index.column)
-        nodeType = start == '* ' || start == '- ' ? 'ul' : 'ol'
-        counter += 1
-        return { counter, nodeType, str, liLevel, index }
-      })
-        .skip(linebreak.atMost(1))
-        .chain((v) => {
-          if (v.liLevel.filter((x) => x % 2 !== 1).length > 0) {
-            initializeList()
-            return P.fail('Invalid indentation')
-          }
-          return P.succeed(v)
-        })
-        .map((v) => {
-          const liLevelBefore = liLevel[v.counter - 1]
-          const liLevelCurrent = liLevel[v.counter]
-          if (liLevelBefore === liLevelCurrent) {
-            this.currentTree.children.push({
-              value: v.str as string | null,
-              children: [],
-              type: v.nodeType,
-              parent: this.currentTree,
-            })
-          } else if (liLevelBefore < liLevelCurrent) {
-            const currentTreeIndex = this.currentTree.children.length - 1
-            this.currentTree = this.currentTree.children[currentTreeIndex]
-            this.currentTree.children.push({
-              children: [],
-              type: v.nodeType,
-              parent: this.currentTree,
-              value: v.str as string | null,
-            })
-          } else if (liLevelBefore > liLevelCurrent) {
-            const unindetationStep = (liLevelBefore - liLevelCurrent) / 2
-            for (let i = 0; i < unindetationStep; i++) {
-              if (this.currentTree.parent !== null) {
-                this.currentTree = this.currentTree.parent
-              }
-            }
-            this.currentTree.children.push({
-              type: v.nodeType,
-              children: [],
-              parent: this.currentTree,
-              value: v.str as string | null,
-            })
-          }
-          const _nodeType = v.nodeType
-          return _nodeType
-        })
-    }
-    const lists = P.lazy(() => {
-      return listLineContent()
-        .atLeast(1)
-        .map((nodeTypes) => {
-          this.rootTree.type = nodeTypes[0]
-          const result = treeToHtml(this.rootTree)
-          // initialization
-          initializeList()
-          return result
-        })
-    })
-
-    const treeToHtml = (treeOrNode: ListTree): T => {
-      if (treeOrNode.type === 'shadow') {
-        return join(treeOrNode.children.map(treeToHtml))
-      } else if (treeOrNode.children.length === 0 && treeOrNode.value !== null) {
-        return mapper('li')(treeOrNode.value)
-      } else if (treeOrNode.children.length !== 0 && treeOrNode.value !== null) {
-        const { children } = treeOrNode
-        return mapper('li')(
-          join([treeOrNode.value, mapper(treeOrNode.children[0].type)(join(children.map(treeToHtml)))])
-        )
-      } else {
-        const { children } = treeOrNode
-        return mapper(treeOrNode.type)(join(children.map(treeToHtml)))
-      }
-    }
-
-    const codeBlockDefinitionStr = P.regexp(/[^`\r\n]*/)
-    // Fenced code block per
-    // https://spec.commonmark.org/0.31.2/#fenced-code-blocks : the fence
-    // closes only on a line of at least as many backticks as the opener, so
-    // a ``` line can appear inside a ```` block.
-    const codeBlock = P.regexp(/`{3,}/).chain((fence) => {
-      const closingFence = P.regexp(new RegExp('`{' + fence.length + ',}[ \\t]*'))
-      // Match a code line that is NOT a closing fence
-      const codeBlockStr = P.regexp(new RegExp('(?!`{' + fence.length + ',}[ \\t]*(?:[\\r\\n]|$))[^\\r\\n]+'))
-      return P.seqMap(
-        codeBlockDefinitionStr,
-        linebreak,
-        linebreak.or(codeBlockStr).many(),
-        linebreak.atMost(1),
-        closingFence,
-        (definition, _2, code, _3, _4) => {
-          // Remove trailing linebreak consumed by .many() before the closing fence
-          while (code.length > 0 && (code[code.length - 1] === '\n' || code[code.length - 1] === '\r\n' || code[code.length - 1] === '\r' || code[code.length - 1] === '')) {
-            code.pop()
-          }
-          if (definition === '') return mapper('pre')(mapper('code')(join(code)))
-          return mapper('pre', { 'data-language': definition })(mapper('code')(join(code)))
-        }
-      )
-    })
-
-    const blockquoteBegin = P.string('> ')
-    // Parse blockquote content using inlines to support HTML tags, ruby, and math
-    const blockquoteInline = P.alt(
-      pluginInline,
-      aozoraRuby,
-      anchor,
-      img,
-      em,
-      strong,
-      code,
-      mathInline,
-      htmlSelfClosing,
-      htmlElement,
-      P.regexp(/[^\r\n<｜\[\]\*\`\@\$]+/),
-      P.regexp(/./)
-    )
-    const blockquoteContent = blockquoteInline.atLeast(1).map(join)
-
-    const blockquoteLine = P.lazy(() => {
-      let blockquoteLevel: number = 0
-      return P.seqMap(
-        blockquoteBegin.then(blockquoteBegin.many().map((x) => (blockquoteLevel = x.length))),
-        blockquoteContent,
-        linebreak.atMost(1),
-        (_1, text, _2) => {
-          return { text, blockquoteLevel }
-        }
-      )
-    })
-    interface IBlockquoteVertex {
-      text: unknown
-      children: IBlockquoteVertex[]
-      parent?: IBlockquoteVertex
-    }
-
-    const createBlockquoteTree = (x: { text: unknown; blockquoteLevel: number }[]) => {
-      let depth = 0
-      let root: IBlockquoteVertex = { text: null, children: [] }
-      let currentNode = root
-      for (const o of x) {
-        if (o.blockquoteLevel < depth) {
-          let node = { text: o.text, children: [], parent: currentNode.parent }
-          for (let i = 0; i < depth - o.blockquoteLevel; i++) {
-            if (currentNode.parent) {
-              currentNode = currentNode.parent
-            }
-          }
-          node.parent = currentNode
-          currentNode.children.push(node)
-          currentNode = node.parent
-          depth = o.blockquoteLevel
-        } else if (o.blockquoteLevel > depth) {
-          let node = { text: o.text, children: [], parent: currentNode }
-          let shadowNode = { text: null, children: [node], parent: currentNode }
-          node.parent = shadowNode
-          currentNode.children.push(shadowNode)
-          currentNode = shadowNode
-          depth = o.blockquoteLevel
-        } else {
-          let node = { text: o.text, children: [], parent: currentNode }
-          currentNode.children.push(node)
-        }
-      }
-      return root
-    }
-    const parseBlockquoteTree = (tree: IBlockquoteVertex, isRoot = false) => {
-      let result: any[] = []
-      for (const [i, v] of tree.children.entries()) {
-        if (v.text !== null) {
-          if (tree.children[i + 1] && tree.children[i + 1].text !== null) {
-            result.push(join([v.text, mapper('br')(null)]))
-          } else {
-            result.push(v.text)
-          }
-        } else if (v.children.length !== 0) {
-          result.push(parseBlockquoteTree(v))
-        }
-      }
-      const _result = mapper('blockquote')(result.reduce((a, b) => join([a, b])))
-      return _result
-    }
-    const blockquote = P.lazy(() => {
-      return blockquoteLine.atLeast(1).map((x) => {
-        return parseBlockquoteTree(createBlockquoteTree(x), true)
-      })
-    })
-    const pluginBlock = P.seqMap(
-      P.string('@['),
-      P.regexp(/[a-zA-Z]+/),
-      P.regexp(/(:[^\]]*)*/),
-      P.string(']\n'),
-      P.seq(P.string('  ').result(''), P.regexp(/[^\r\n]+/), linebreak.atMost(1).result('\n'))
-        .map(join)
-        .atLeast(1)
-        .map(join),
-      (_1, pluginName, args, _2, content) => {
-        return this.opts.plugins && this.opts.plugins[pluginName]
-          ? this.opts.plugins[pluginName](args, content, mapper, join)
-          : join([_1, pluginName, args, _2, content])
-      }
-    )
-    // Block math: $$...$$ (must be on its own line or surrounded by newlines)
-    // Content can include anything except $$ (including single $, newlines, etc.)
-    const mathBlockContent = P.regexp(/[\s\S]*?(?=\$\$)/)
-    const mathBlock = P.seqMap(
-      P.regexp(/^\$\$/),
-      mathBlockContent,
-      P.string('$$'),
-      P.alt(linebreak, P.eof),
-      (_1, content, _3, _4) => {
-        // Output raw $$...$$ for MathJax auto-detection
-        return '$$' + content.trim() + '$$'
-      }
-    )
-
-    // Footnote definition: [^1]: content (with optional indented continuation lines)
-    const footnoteDefFirstLine = P.regexp(/[^\r\n]*/)
-    const footnoteDefContLine = P.seqMap(
-      P.regexp(/^    /), // 4 spaces or tab for continuation
-      P.regexp(/[^\r\n]*/),
-      (_indent, content) => content
-    )
-    const footnoteDefContLineAlt = P.seqMap(
-      P.string('\t'), // tab for continuation
-      P.regexp(/[^\r\n]*/),
-      (_indent, content) => content
-    )
-    const footnoteDef = P.seqMap(
-      P.regexp(/^\[\^([0-9]+)\]:\s*/, 1),
-      footnoteDefFirstLine,
-      P.seq(linebreak, P.alt(footnoteDefContLine, footnoteDefContLineAlt))
-        .map(([_br, content]) => content)
-        .many(),
-      P.alt(linebreak, P.eof),
-      (num, firstLine, contLines, _end) => {
-        const fullContent = [firstLine, ...contLines].join('\n').trim()
-        return mapper('footnote-def', { id: num })(fullContent)
-      }
-    )
-
-    const block = P.alt(
-      // Block separator: consume any whitespace EXCEPT full-width space U+3000,
-      // so Japanese-style first-line indentation is preserved on the next paragraph.
-      P.regexp(/[^\S\u3000]+/).result(''),
-      pluginBlock,
-      h1Special,
-      h2Special,
-      h6,
-      h5,
-      h4,
-      h3,
-      h2,
-      h1,
-      table,
-      codeBlock,
-      mathBlock,
-      footnoteDef,
-      lists,
-      blockquote,
-      paragraph,
-      linebreak.result('')
-    )
-
-    this.acceptables = P.alt(block).many().map(join) as any as P.Parser<T>
+    this.acceptables = { parse: (input: string) => new Scanner(this, input).parse() }
   }
+
   parse(s: string) {
     this.liLevelBefore = this.liLevel = null
-    this.rootTree = this.currentTree = {
-      value: null,
-      children: [],
-      type: 'shadow',
-      parent: null,
-    }
-    // Trim leading/trailing whitespace EXCEPT full-width space U+3000, so that
-    // Japanese-style first-line indentation is preserved at the very beginning
-    // of the document. (String.prototype.trim() would strip U+3000, which we
-    // do not want here.)
-    const trimmed = s.replace(/^[^\S\u3000]+/, '').replace(/[^\S\u3000]+$/, '')
+    resetTree(this)
+    let start = 0,
+      end = s.length
+    while (start < end && whitespace(s.charCodeAt(start)) && s.charCodeAt(start) !== 12288) start++
+    while (end > start && whitespace(s.charCodeAt(end - 1)) && s.charCodeAt(end - 1) !== 12288) end--
+    const trimmed = start === 0 && end === s.length ? s : s.slice(start, end)
     const parsed = this.acceptables.parse(trimmed)
     if (parsed.status === true && parsed.hasOwnProperty('value')) return this.opts.export.postprocess(parsed.value)
     console.error(trimmed)
     console.error(parsed)
     throw new Error('Parsing was failed.')
+  }
+}
+
+function codeEntity(character: string): string {
+  switch (character) {
+    case '&':
+      return '&amp;'
+    case '<':
+      return '&lt;'
+    default:
+      return '&gt;'
   }
 }
 

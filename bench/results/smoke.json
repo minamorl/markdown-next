@@ -1,0 +1,295 @@
+{
+  "schema": 1,
+  "began": "2026-11-06T17:30:07.161Z",
+  "ended": "2026-11-06T17:30:08.264Z",
+  "baselineRevision": "f71fb55dd35cd102c64135ae15a9837ee3ca6b21",
+  "measuredRevision": "f71fb55dd35cd102c64135ae15a9837ee3ca6b21",
+  "parserSha256": "6c629e0a233c89089fcfba82523c0b6af1e53e25821974d554a1a8d3b913ad10",
+  "compiledParserSha256": "194137a9181db9dc78159013501d77cbc85c61719faaa86f40e91f2ac727688d",
+  "goldenSha256": "236594eed613edf8a4fcad4d16ea17a84b6fa74dafa7853e81f9a3714219a495",
+  "harnessSha256": {
+    "bench/run.cjs": "1e793dc216548c0dad637d638d8fa7f7922fcce20c86b4378b15d88aa72ba0aa",
+    "bench/worker.cjs": "bba37fd4945439d313d186fa9083dfa0805611f553cf55a32493f9c00cff0508",
+    "bench/stats.cjs": "0db1d57cde37d95bd3e99d40e62938eb5863457b4a62811b1b8b6f78550afeaa",
+    "bench/checkpoint.cjs": "6605c9fa771e0318049f29cc72ae71ff7dc35c19fc4e4ccc8f8d9a2203043cd4",
+    "test/characterization/support.cjs": "0854fd1b92be740e590e45d37198d281af1827a5dc6c134f85c13be5d07644b8"
+  },
+  "corpusSha256": "e58da07572e70f70b3191d04a6f5ed7476766069432a1b2a2794962eb3093c98",
+  "options": {
+    "samples": 5,
+    "warm-samples": 5,
+    "warmup": 10,
+    "output": "bench/results/smoke.json",
+    "case": "plugin-inline"
+  },
+  "runtime": {
+    "node": "v26.12.1",
+    "v8": "14.6.202.34-node.40",
+    "platform": "linux",
+    "arch": "x64",
+    "release": "7.0.0-38-generic",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor",
+    "nodeOptions": "",
+    "execArgv": [],
+    "parsimmon": "1.18.1"
+  },
+  "sessions": [
+    {
+      "type": "session",
+      "started": "2026-11-06T17:30:07.164Z",
+      "resume": false,
+      "load": [
+        11.54,
+        12.94,
+        14.89
+      ]
+    }
+  ],
+  "environment": {
+    "node": "v26.12.1",
+    "v8": "14.6.202.34-node.40",
+    "versions": {
+      "node": "26.12.1",
+      "acorn": "8.19.0",
+      "ada": "4.0.0",
+      "amaro": "1.1.11",
+      "ares": "1.34.9",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "libffi": "3.8.0",
+      "lief": "1.0.0",
+      "llhttp": "9.4.3",
+      "merve": "1.2.2",
+      "modules": "147",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.70.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.9",
+      "simdjson": "5.0.3",
+      "simdutf": "7.7.0",
+      "sqlite": "3.54.0",
+      "tz": "2026e",
+      "undici": "8.12.2",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "14.6.202.34-node.40",
+      "zlib": "1.3.2.1-motley-456ae73",
+      "zstd": "1.5.7"
+    },
+    "platform": "linux",
+    "arch": "x64",
+    "release": "7.0.0-38-generic",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor",
+    "logicalCpus": 12,
+    "availableParallelism": 12,
+    "totalMemoryBytes": 99017428992,
+    "loadBefore": [
+      11.54,
+      12.94,
+      14.89
+    ],
+    "loadAfter": [
+      11.54,
+      12.94,
+      14.89
+    ],
+    "nodeOptions": "",
+    "execArgv": [],
+    "childExecArgv": [
+      "--expose-gc"
+    ],
+    "parsimmon": "1.18.1",
+    "typescript": "6.0.2",
+    "mocha": "11.7.5"
+  },
+  "methodology": {
+    "clock": "process.hrtime.bigint, milliseconds",
+    "percentile": "nearest rank: sorted[ceil(p*n)-1]",
+    "cold": "One first parse in each fresh Node process, after require/corpus IO and forced GC; startup/imports excluded.",
+    "warm": "Same first child, after its cold parse and warmup additional parses; consecutive single-call samples, no forced GC between them.",
+    "construction": "Every timed call includes a new Parser. Default HTML uses exported parse; plugins and AST use new Parser(opts).parse.",
+    "memory": "Signed heapUsed after minus before each call, outside the timer. NET HEAP CHANGE, not allocated bytes; GC can make it negative.",
+    "validation": "Every timed result including plugin traces/errors is hashed and checked against the frozen golden outside the timer."
+  },
+  "results": [
+    {
+      "id": "plugin-inline",
+      "category": "plugin",
+      "plugins": "probe",
+      "mode": "html",
+      "utf16Length": 27,
+      "codePoints": 27,
+      "utf8Bytes": 27,
+      "cold": [
+        {
+          "elapsedMs": 9.91411,
+          "heapDeltaBytes": 555584,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 4.552601,
+          "heapDeltaBytes": 555584,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 5.089865,
+          "heapDeltaBytes": 563064,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 4.407758,
+          "heapDeltaBytes": 563136,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 5.579108,
+          "heapDeltaBytes": 553912,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        }
+      ],
+      "warm": [
+        {
+          "elapsedMs": 0.387982,
+          "heapDeltaBytes": 402200,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.348828,
+          "heapDeltaBytes": 401992,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.297251,
+          "heapDeltaBytes": 163880,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.641711,
+          "heapDeltaBytes": -1601056,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.372312,
+          "heapDeltaBytes": 399216,
+          "outcomeSha256": "ea2364d367b30cbe715333a1c72a041cb33f0d457741bfd2dcd1067d3a15c583",
+          "status": "return"
+        }
+      ],
+      "summary": {
+        "cold": {
+          "n": 5,
+          "p50Ms": 5.089865,
+          "p95Ms": 9.91411,
+          "p50HeapDeltaBytes": 555584
+        },
+        "warm": {
+          "n": 5,
+          "p50Ms": 0.372312,
+          "p95Ms": 0.641711,
+          "p50HeapDeltaBytes": 399216
+        }
+      }
+    },
+    {
+      "id": "plugin-inline",
+      "category": "plugin",
+      "plugins": "probe",
+      "mode": "ast",
+      "utf16Length": 27,
+      "codePoints": 27,
+      "utf8Bytes": 27,
+      "cold": [
+        {
+          "elapsedMs": 5.339617,
+          "heapDeltaBytes": 550952,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 6.177729,
+          "heapDeltaBytes": 553880,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 4.800349,
+          "heapDeltaBytes": 544064,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 8.157094,
+          "heapDeltaBytes": 550952,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 4.67368,
+          "heapDeltaBytes": 552768,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        }
+      ],
+      "warm": [
+        {
+          "elapsedMs": 0.438809,
+          "heapDeltaBytes": 400584,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.404323,
+          "heapDeltaBytes": 74736,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.405115,
+          "heapDeltaBytes": 396384,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.81636,
+          "heapDeltaBytes": -1603400,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        },
+        {
+          "elapsedMs": 0.44542,
+          "heapDeltaBytes": 396520,
+          "outcomeSha256": "c84c7b514015fcd303e4987412804d3a2cae240a44e190c162d35aac6eb1ba6a",
+          "status": "return"
+        }
+      ],
+      "summary": {
+        "cold": {
+          "n": 5,
+          "p50Ms": 5.339617,
+          "p95Ms": 8.157094,
+          "p50HeapDeltaBytes": 550952
+        },
+        "warm": {
+          "n": 5,
+          "p50Ms": 0.438809,
+          "p95Ms": 0.81636,
+          "p50HeapDeltaBytes": 396384
+        }
+      }
+    }
+  ]
+}

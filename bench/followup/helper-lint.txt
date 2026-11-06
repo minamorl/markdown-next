@@ -1,0 +1,4 @@
+command: ["./node_modules/.bin/eslint","bench/followup/checkpoint.cjs","bench/followup/document-results.cjs","bench/followup/preflight.cjs","bench/followup/run.cjs","bench/followup/scope-check.cjs","bench/followup/security-golden.cjs","bench/followup/verify-raw.cjs"]
+environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":"","npm_config_update_notifier":"false","npm_config_offline":"true","npm_config_cache":"/home/minamorl/.cc/tmp/fIlqD89W/npm-followup-cache"}
+
+exit_code: 0; signal: null

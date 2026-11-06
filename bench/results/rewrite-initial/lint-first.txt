@@ -1,0 +1,44 @@
+command: ["npm","run","lint"]
+
+> @minamorl/markdown-next@2.2.4 lint
+> eslint src test
+
+
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/src/rewrite-evidence/checkpoint.cjs
+   5:14  error  'process' is not defined  no-undef
+   6:25  error  'process' is not defined  no-undef
+   9:18  error  'process' is not defined  no-undef
+  22:15  error  'process' is not defined  no-undef
+  25:80  error  'process' is not defined  no-undef
+  30:1   error  'console' is not defined  no-undef
+  31:1   error  'console' is not defined  no-undef
+  32:1   error  'console' is not defined  no-undef
+
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/src/rewrite-evidence/differential.cjs
+   2:7   error  'fs' is assigned a value but never used  no-unused-vars
+   9:34  error  'process' is not defined                 no-undef
+  11:47  error  'process' is not defined                 no-undef
+  16:20  error  'console' is not defined                 no-undef
+  17:3   error  'console' is not defined                 no-undef
+  24:13  error  'console' is not defined                 no-undef
+  36:42  error  'process' is not defined                 no-undef
+  44:7   error  'console' is not defined                 no-undef
+  45:29  error  'console' is not defined                 no-undef
+  45:69  error  'process' is not defined                 no-undef
+  49:1   error  'console' is not defined                 no-undef
+  50:15  error  'process' is not defined                 no-undef
+
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/src/rewrite-evidence/run.cjs
+   4:34   error  'process' is not defined  no-undef
+   7:78   error  'process' is not defined  no-undef
+   8:77   error  'process' is not defined  no-undef
+  10:100  error  'process' is not defined  no-undef
+
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/test/test-parser.ts
+  299:23  warning  'str' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+  577:70  warning  'join' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 26 problems (24 errors, 2 warnings)
+
+
+exit_code: 1; signal: null

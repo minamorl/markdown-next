@@ -1,0 +1,8 @@
+$ git add -- package.json test/characterization bench docs/rewrite-baseline.md && git diff --cached --check && git diff --cached --stat && git status --short
+fatal: Unable to create '/home/minamorl/repos/markdown-next/.git/worktrees/freeze-and-bench/index.lock': 読み込み専用ファイルシステムです
+exit_code=128
+
+git add stopped before staging; commit was not attempted.
+The linked worktree's Git administration directory is outside the assigned writable scope.
+No permissions, Git metadata location, or repository history were changed to bypass this restriction.
+All deliverables remain in the assigned worktree for root verification and commit.

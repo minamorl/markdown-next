@@ -1,0 +1,8 @@
+{
+  "revision": "eb825d9",
+  "parserSha256": "c093cea0e313062ac3b9b1896a695467dbad5bc3d32617fbe5d2da05a8b46809",
+  "goldenSha256": "236594eed613edf8a4fcad4d16ea17a84b6fa74dafa7853e81f9a3714219a495",
+  "corpusSha256": "6f80ae87cae667c5196406ad026b68c63ea2258301923abd28418a4c5ed110e5",
+  "permittedId": "fence-html",
+  "previousHtml": "<pre data-language=\"html\"><code><script>&</script></code></pre>"
+}

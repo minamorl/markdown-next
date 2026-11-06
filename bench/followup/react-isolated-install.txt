@@ -1,0 +1,13 @@
+command: ["pnpm","--dir","/home/minamorl/.cc/tmp/fIlqD89W/markdown-readme-react","install","--offline","--frozen-store","--ignore-scripts","--trust-lockfile"]
+environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":"false"}
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +3
++++
+Packages are copied from the content-addressable store to the virtual store.
+  Content-addressable store is at: /home/minamorl/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+[ERR_PNPM_NO_OFFLINE_TARBALL] A package is missing from the store but cannot download it in offline mode. The missing package may be downloaded from https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz.
+
+This error happened while installing a direct dependency of /home/minamorl/.cc/tmp/fIlqD89W/markdown-readme-react
+
+exit_code: 1; signal: null

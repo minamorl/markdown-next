@@ -1,0 +1,8 @@
+[
+  {
+    "id": "fence-html",
+    "input": "```html\n<script>&</script>\n```",
+    "before": "<pre data-language=\"html\"><code><script>&</script></code></pre>",
+    "after": "<pre data-language=\"html\"><code>&lt;script&gt;&amp;&lt;/script&gt;</code></pre>"
+  }
+]

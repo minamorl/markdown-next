@@ -1,0 +1,7 @@
+command: ["npm","run","build"]
+
+> @minamorl/markdown-next@2.2.4 build
+> tsc
+
+
+exit_code: 0; signal: null

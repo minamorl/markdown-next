@@ -1,0 +1,17 @@
+command: ["npm","run","lint"]
+
+> @minamorl/markdown-next@2.2.4 lint
+> eslint src test
+
+
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/src/rewrite-evidence/run.cjs
+  1:20  error  'console' is defined but never used  no-unused-vars
+
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/test/test-parser.ts
+  299:23  warning  'str' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+  577:70  warning  'join' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (1 error, 2 warnings)
+
+
+exit_code: 1; signal: null
