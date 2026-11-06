@@ -1,0 +1,11 @@
+command: npm run bench:verify
+
+> @minamorl/markdown-next@2.3.0 bench:verify
+> node bench/verify.cjs
+
+Validated 574 input/mode rows; cold=2870, warm=11480, total=14350; journal children=2870.
+Every raw digest/status and p50/p95/heap median match golden and independent sorted recalculation.
+Source, compiled parser, corpus, golden and harness hashes match; journal matches final JSON.
+Exception observations=75; negative net heap deltas=895 (not allocation totals).
+
+exit_code: 0; signal: null

@@ -1,4 +1,4 @@
-/* global process, __dirname */
+/* global console, process, __dirname */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -8,7 +8,31 @@ const { execFileSync } = require('node:child_process');
 const { test } = require('node:test');
 const ts = require('typescript');
 const React = require('react');
+const { renderToStaticMarkup } = require('react-dom/server');
 const root = path.resolve(__dirname, '..');
+
+// Expected markup is written independently of the README renderer. These
+// fixtures must reach React DOM: inspecting element.props misses style errors.
+const reactFixtures = [
+  ['<span style="color:red">red</span>', '<p><span style="color:red">red</span></p>'],
+  ['<span STYLE="color:red; background-color: white; --accent:blue; -ms-transition:all 1s; -webkit-user-select:none" CLASS="notice" data-id="7" aria-hidden="false" OnClick="alert(1)">red</span>',
+    '<p><span style="color:red;background-color:white;--accent:blue;-ms-transition:all 1s;-webkit-user-select:none" class="notice" data-id="7" aria-hidden="false">red</span></p>'],
+  ['<a href="https://example.com/?a=1&amp;b=2" tabindex="0" download>link</a>',
+    '<p><a href="https://example.com/?a=1&amp;b=2" tabindex="0" download="">link</a></p>'],
+  ['<label for="name">Name</label><input id="name" type="checkbox" checked="false" disabled readonly value="yes"></input>',
+    '<p><label for="name">Name</label><input id="name" type="checkbox" disabled="" readOnly="" checked="" value="yes"/></p>'],
+  ['<details open="false"><summary>More</summary><button disabled>Send</button></details>',
+    '<p><details open=""><summary>More</summary><button disabled="">Send</button></details></p>'],
+  ['<span title="hint" contenteditable="false" draggable="false" spellcheck="false" data-empty aria-label="label">text</span>',
+    '<p><span title="hint" contentEditable="false" draggable="false" spellCheck="false" data-empty="" aria-label="label">text</span></p>'],
+  ['<span style="content: &quot;a;b:c&quot;; background-image:url(data:image/svg+xml;a:b); color:/* comment; */red; font-weight: bold">css</span>',
+    '<p><span style="content:&quot;a;b:c&quot;;background-image:url(data:image/svg+xml;a:b);color:red;font-weight:bold">css</span></p>'],
+  ['<br class="break" style="display:block" aria-hidden="true" onfocus="alert(1)">',
+    '<p><br class="break" style="display:block" aria-hidden="true"/></p>'],
+  ['<span key="bad" ref="bad" children="bad" dangerouslySetInnerHTML="bad" on="bad" ONMOUSEOVER="bad">safe</span>',
+    '<p><span>safe</span></p>'],
+  ['<ol start="2"><li value="3">third</li></ol>', '<p><ol start="2"><li value="3">third</li></ol></p>'],
+];
 
 function instrument(source, filename) {
   const file = ts.createSourceFile(filename, source, ts.ScriptTarget.Latest, true, filename.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
@@ -34,7 +58,7 @@ function normalize(value) {
   return { tag: value.type === React.Fragment ? 'fragment' : value.type, key: value.key, props, children: normalize(children === undefined ? null : children) };
 }
 
-function exerciseReadme() {
+function exerciseReadme(verifyReact = () => {}) {
   const markdown = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
   const blocks = [...markdown.matchAll(/^```(\w+)\n([\s\S]*?)^```/gm)].map((match, index) => ({ index, language: match[1], code: match[2] }));
   assert.ok(blocks.length > 0);
@@ -81,6 +105,7 @@ function exerciseReadme() {
       if (block.language === 'tsx') {
         const { Markdown } = sample.exports.readmeComponents;
         for (const content of ['# Hello **world**', '```\n<x>&\n```', 'a `b`\nc', '![x](u)']) output.push(normalize(Markdown({ content })));
+        verifyReact(Markdown);
       }
       return { language: block.language, output };
     });
@@ -88,7 +113,22 @@ function exerciseReadme() {
 }
 
 module.exports = { exerciseReadme };
-if (require.main === module) test('every README code example typechecks as a consumer and matches its frozen output', () => {
-  const expected = JSON.parse(fs.readFileSync(path.join(__dirname, 'readme-expected.json'), 'utf8'));
-  assert.deepStrictEqual(exerciseReadme(), expected);
-});
+if (require.main === module) {
+  test('every README code example typechecks as a consumer and matches its frozen output', () => {
+    const expected = JSON.parse(fs.readFileSync(path.join(__dirname, 'readme-expected.json'), 'utf8'));
+    assert.deepStrictEqual(exerciseReadme(), expected);
+  });
+  test('README React renderer renders HTML attributes through react-dom/server without warnings', t => {
+    const warnings = [];
+    t.mock.method(console, 'error', (...args) => warnings.push(args));
+    let rendered = 0;
+    exerciseReadme(Markdown => {
+      for (const [content, expected] of reactFixtures) {
+        assert.equal(renderToStaticMarkup(React.createElement(Markdown, { content })), expected, content);
+        rendered++;
+      }
+    });
+    assert.equal(rendered, reactFixtures.length);
+    assert.deepStrictEqual(warnings, []);
+  });
+}

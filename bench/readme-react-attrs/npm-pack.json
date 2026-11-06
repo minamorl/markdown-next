@@ -1,0 +1,51 @@
+[
+  {
+    "id": "@minamorl/markdown-next@2.3.0",
+    "name": "@minamorl/markdown-next",
+    "version": "2.3.0",
+    "size": 28552,
+    "unpackedSize": 115153,
+    "shasum": "210aea105a714b92fe6a00b3d0c383558ab07f6d",
+    "integrity": "sha512-3Bwf22yKg9NxHSk3rTUNsgkwfgFWCu0mzldjri1ucCEyfNmpRcdkqNaCeR9WZi9M2Rwz2wZD3yEXT0dFGFjSDA==",
+    "filename": "minamorl-markdown-next-2.3.0.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 1065,
+        "mode": 384
+      },
+      {
+        "path": "README.md",
+        "size": 10974,
+        "mode": 384
+      },
+      {
+        "path": "lib/src/html-entities.d.ts",
+        "size": 59,
+        "mode": 384
+      },
+      {
+        "path": "lib/src/html-entities.js",
+        "size": 58264,
+        "mode": 384
+      },
+      {
+        "path": "lib/src/parser.d.ts",
+        "size": 1567,
+        "mode": 384
+      },
+      {
+        "path": "lib/src/parser.js",
+        "size": 41111,
+        "mode": 384
+      },
+      {
+        "path": "package.json",
+        "size": 2113,
+        "mode": 384
+      }
+    ],
+    "entryCount": 7,
+    "bundled": []
+  }
+]
