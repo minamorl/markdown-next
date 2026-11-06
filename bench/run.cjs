@@ -42,6 +42,7 @@ const identity = {
   measuredRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   parserSha256: hash(fs.readFileSync(path.join(root, 'src/parser.ts'))),
   compiledParserSha256: hash(fs.readFileSync(path.join(root, 'lib/src/parser.js'))),
+  parserDependenciesSha256: Object.fromEntries(['src/html-entities.ts', 'lib/src/html-entities.js'].map(f => [f, hash(fs.readFileSync(path.join(root, f)))])),
   goldenSha256: hash(fs.readFileSync(path.join(root, 'test/characterization/golden.json'))),
   harnessSha256: Object.fromEntries(['bench/run.cjs', 'bench/worker.cjs', 'bench/stats.cjs', 'bench/checkpoint.cjs', 'test/characterization/support.cjs'].map((f) => [f, hash(fs.readFileSync(path.join(root, f)))])),
   corpusSha256: golden.corpusSha256, options: measurementOptions,

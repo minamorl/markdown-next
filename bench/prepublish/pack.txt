@@ -1,0 +1,25 @@
+command: ["npm","pack","--dry-run"]
+environment: {"pnpm_config_verify_deps_before_run":"false"}
+rainpulse-markdown-next-2.3.0.tgz
+npm notice
+npm notice 📦  @rainpulse/markdown-next@2.3.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 7.0kB README.md
+npm notice 59B lib/src/html-entities.d.ts
+npm notice 58.3kB lib/src/html-entities.js
+npm notice 1.6kB lib/src/parser.d.ts
+npm notice 41.1kB lib/src/parser.js
+npm notice 2.0kB package.json
+npm notice Tarball Details
+npm notice name: @rainpulse/markdown-next
+npm notice version: 2.3.0
+npm notice filename: rainpulse-markdown-next-2.3.0.tgz
+npm notice package size: 27.0 kB
+npm notice unpacked size: 111.1 kB
+npm notice shasum: befd04b7ed8b2e79dbe5928336e0301b815e1182
+npm notice integrity: sha512-q9nxCQnq8CeOa[...]y+E0l+byc2iyg==
+npm notice total files: 7
+npm notice
+
+exit_code: 0; signal: null

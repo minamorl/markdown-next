@@ -4,19 +4,23 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const { read, hash } = require('../test/characterization/support.cjs');
 const { loadJournal } = require('./checkpoint.cjs');
-const data = read('bench/results/baseline.json');
+// Historical baseline remains immutable; validate the current release candidate.
+const data = read('bench/prepublish/benchmark.json');
 const corpus = read('test/characterization/corpus.json');
 const golden = read('test/characterization/golden.json');
-const journal = loadJournal('bench/results/baseline.json.journal.jsonl');
+const journal = loadJournal('bench/prepublish/benchmark.json.journal.jsonl');
 assert.equal(journal.torn, false);
+for (const key of ['parserSha256', 'compiledParserSha256', 'parserDependenciesSha256', 'harnessSha256', 'corpusSha256', 'goldenSha256', 'runtime', 'options']) assert.deepStrictEqual(journal.records[0].identity[key], data[key], key);
 assert.equal(data.results.length, corpus.cases.length * 2);
 assert.equal(new Set(data.results.map((r) => r.id + '/' + r.mode)).size, data.results.length);
-assert.equal(data.parserSha256, golden.parserSha256);
+// golden.parserSha256 identifies the original legacy capture, not this scanner.
 assert.equal(data.parserSha256, hash(fs.readFileSync('src/parser.ts')));
 assert.equal(data.compiledParserSha256, hash(fs.readFileSync('lib/src/parser.js')));
 assert.equal(data.corpusSha256, hash(JSON.stringify(corpus)));
 assert.equal(data.goldenSha256, hash(fs.readFileSync('test/characterization/golden.json')));
 for (const [file, digest] of Object.entries(data.harnessSha256)) assert.equal(hash(fs.readFileSync(file)), digest, file);
+for (const [file, digest] of Object.entries(data.parserDependenciesSha256)) assert.equal(hash(fs.readFileSync(file)), digest, file);
+for (const [file, digest] of Object.entries(read('bench/prepublish/measurement-input-hashes.json'))) assert.equal(hash(fs.readFileSync(file)), digest, file);
 const children = journal.records.filter((r) => r.type === 'sample');
 assert.equal(children.length, data.results.length * data.options.samples);
 assert.equal(new Set(children.map((r) => r.id + '/' + r.mode + '/' + r.sample)).size, children.length);

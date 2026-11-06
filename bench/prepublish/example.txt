@@ -1,0 +1,12 @@
+command: ["npm","run","example"]
+
+> @rainpulse/markdown-next@2.3.0 example
+> cd examples && webpack
+
+asset ./bundle.js 115 KiB [compared for emit] (name: main)
+./index.js 281 bytes [built] [code generated]
+../lib/src/parser.js 40.1 KiB [built] [code generated]
+../lib/src/html-entities.js 56.9 KiB [built] [code generated]
+webpack 5.105.4 compiled successfully in 153 ms
+
+exit_code: 0; signal: null

@@ -1,0 +1,25 @@
+command: ["npm","run","bench","--","--output=bench/prepublish/benchmark.json"]
+environment: {"pnpm_config_verify_deps_before_run":""}
+
+> @rainpulse/markdown-next@2.3.0 bench
+> npm run build && node bench/run.cjs --output=bench/prepublish/benchmark.json
+
+
+> @rainpulse/markdown-next@2.3.0 build
+> tsc
+
+Measured 25/287 inputs (HTML + AST).
+Measured 50/287 inputs (HTML + AST).
+Measured 75/287 inputs (HTML + AST).
+Measured 100/287 inputs (HTML + AST).
+Measured 125/287 inputs (HTML + AST).
+Measured 150/287 inputs (HTML + AST).
+Measured 175/287 inputs (HTML + AST).
+Measured 200/287 inputs (HTML + AST).
+Measured 225/287 inputs (HTML + AST).
+Measured 250/287 inputs (HTML + AST).
+Measured 275/287 inputs (HTML + AST).
+Measured 287/287 inputs (HTML + AST).
+Raw samples + p50/p95: bench/prepublish/benchmark.json
+
+exit_code: 0; signal: null
