@@ -5,6 +5,9 @@ export interface ListTree {
   parent: ListTree | null
 }
 
+/** Tuple elements, text and the nested groups emitted by the AST exporter. */
+export type ASTNode = string | null | [string, Record<string, unknown> | null, ASTNode] | ASTNode[]
+
 export type Plugin<T> = (args: string, content: any, mapper: Mapper<T>, join: Function) => string
 
 export type Mapper<T> = (tagName: string, attributes?: any) => (children: string | T | null) => T
@@ -141,6 +144,12 @@ class Scanner<T> {
     return this.mapper(tag, attributes)(children)
   }
 
+  private codeNode(content: any): any {
+    // Only Markdown code is literal text. Raw HTML (including <code>) keeps
+    // its passthrough semantics, and custom/AST exporters receive source text.
+    return this.node('code', this.mapper === (asHTML.mapper as Mapper<any>) ? content.replace(/[&<>]/g, codeEntity) : content)
+  }
+
   private plugin(block: boolean): boolean {
     const start = this.p
     if (this.c(start) !== 64 || this.c(start + 1) !== 91) return false
@@ -240,7 +249,7 @@ class Scanner<T> {
           b--
         }
         this.p = end
-        this.value = this.node('code', this.input.slice(a, b))
+        this.value = this.codeNode(this.input.slice(a, b))
         return true
       }
       i = end
@@ -572,7 +581,7 @@ class Scanner<T> {
           code.pop()
         this.p = after
         const definition = this.input.slice(openerEnd, definitionEnd)
-        const value = this.node('code', this.join(code))
+        const value = this.codeNode(this.join(code))
         this.value =
           definition === '' ? this.node('pre', value) : this.node('pre', value, { 'data-language': definition })
         return true
@@ -884,6 +893,17 @@ export class Parser<T> {
     console.error(trimmed)
     console.error(parsed)
     throw new Error('Parsing was failed.')
+  }
+}
+
+function codeEntity(character: string): string {
+  switch (character) {
+    case '&':
+      return '&amp;'
+    case '<':
+      return '&lt;'
+    default:
+      return '&gt;'
   }
 }
 

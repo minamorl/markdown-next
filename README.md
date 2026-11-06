@@ -22,7 +22,7 @@ The simplest way to get HTML:
 import { parse } from '@minamorl/markdown-next'
 
 parse('# Hello **world**')
-// '<h1>Hello <strong>world</strong></h1>'
+// '<h1>Hello </h1><p><strong>world</strong></p>'
 ```
 
 ## Getting an AST Instead
@@ -36,13 +36,14 @@ const parser = new Parser({ export: asAST })
 const ast = parser.parse('# Hello **world**')
 ```
 
-The AST uses a simple tuple format: `[tagName, attributes, children]`
+Elements use `[tagName, attributes, children]`. Text is a string, empty children may be `null`, and joins can produce nested arrays of nodes. Headers keep the existing plain-text behavior, so emphasis after a header becomes a following paragraph:
 
 ```typescript
 // Input: '# Hello **world**'
 // Output:
 [
-  ['h1', null, ['Hello ', ['strong', null, 'world']]]
+  ['h1', null, 'Hello '],
+  ['p', null, [['strong', null, 'world']]]
 ]
 ```
 
@@ -51,32 +52,32 @@ The AST uses a simple tuple format: `[tagName, attributes, children]`
 Here's a minimal renderer:
 
 ```tsx
-import { Parser, asAST, ASTNode } from '@minamorl/markdown-next'
+import * as React from 'react'
+import { Parser, asAST, type ASTNode } from '@minamorl/markdown-next'
+
+type ElementNode = [string, Record<string, unknown> | null, ASTNode]
+
+function isElementNode(node: ASTNode): node is ElementNode {
+  return Array.isArray(node) && node.length === 3 && typeof node[0] === 'string'
+    && (node[1] === null || (typeof node[1] === 'object' && !Array.isArray(node[1])))
+}
 
 function renderNode(node: ASTNode, key: number = 0): React.ReactNode {
-  if (typeof node === 'string') return node
+  if (node === null || typeof node === 'string') return node
   if (!Array.isArray(node)) return null
+  if (!isElementNode(node)) return node.map((child, i) => renderNode(child, i))
 
   const [tag, attrs, children] = node
-
-  // Self-closing tags
   if (tag === 'img' || tag === 'br' || tag === 'hr') {
     return React.createElement(tag, { ...attrs, key })
   }
-
-  // Recursively render children
-  const kids = Array.isArray(children)
-    ? children.map((child, i) => renderNode(child, i))
-    : renderNode(children, 0)
-
-  return React.createElement(tag, { ...attrs, key }, kids)
+  return React.createElement(tag, { ...attrs, key }, renderNode(children))
 }
 
-// Usage
 const parser = new Parser({ export: asAST })
 
 function Markdown({ content }: { content: string }) {
-  const ast = parser.parse(content)
+  const ast: ASTNode[] = parser.parse(content)
   return <>{ast.map((node, i) => renderNode(node, i))}</>
 }
 ```
@@ -86,6 +87,8 @@ function Markdown({ content }: { content: string }) {
 Supports [Aozora bunko](https://www.aozora.gr.jp/) ruby syntax, commonly used in Japanese publishing:
 
 ```typescript
+import { parse } from '@minamorl/markdown-next'
+
 parse('｜漢字《かんじ》')
 // '<p><ruby>漢字<rt>かんじ</rt></ruby></p>'
 
@@ -97,9 +100,13 @@ The `｜` (full-width pipe) marks the start of the base text, and `《》` conta
 
 ## HTML Passthrough
 
+HTML passthrough is intentional. Output is **not sanitized**: sanitize HTML from untrusted input before inserting it into a page, including plugin output and link/image URLs. Markdown code spans and fences escape `&`, `<`, and `>` as literal text.
+
 Sometimes you need HTML that markdown doesn't support. Just write it:
 
 ```typescript
+import { parse } from '@minamorl/markdown-next'
+
 parse('<cite>The Art of Computer Programming</cite>')
 // '<p><cite>The Art of Computer Programming</cite></p>'
 
@@ -115,6 +122,8 @@ parse('<details><summary>Click me</summary>Hidden content</details>')
 Define custom syntax with plugins. Useful for embeds, custom components, or domain-specific markup.
 
 ```typescript
+import { Parser, asHTML } from '@minamorl/markdown-next'
+
 const parser = new Parser({
   export: asHTML,
   plugins: {
@@ -139,12 +148,14 @@ parser.parse(`
 
 Plugin function signature:
 ```typescript
-type Plugin = (
-  args: string,           // Everything after the colon
-  content: Content,       // Parsed content (for block plugins)
-  mapper: ElementMapper,  // Helper to create elements
-  join: JoinFunction      // Helper to join content
-) => string | ASTNode
+import type { Mapper } from '@minamorl/markdown-next'
+
+type Plugin<T> = (
+  args: string,           // Inline args omit the first colon; block args retain it
+  content: any,           // null inline; exporter-joined content in a block
+  mapper: Mapper<T>,      // Helper to create elements
+  join: Function         // Helper to join content
+) => string
 ```
 
 ## Supported Markdown
@@ -174,12 +185,15 @@ Quick function for HTML output.
 ### `Parser<T>`
 
 ```typescript
+import { Parser, asHTML } from '@minamorl/markdown-next'
+
 const parser = new Parser({
   export: asHTML,  // or asAST
-  plugins: { ... } // optional
+  plugins: {}      // optional
 })
 
-parser.parse(markdown) // returns T (string for asHTML, ASTNode[] for asAST)
+parser.parse('text')
+// '<p>text</p>'
 ```
 
 ### `asHTML`
@@ -193,7 +207,7 @@ Export type that produces an array of AST nodes.
 ### `ASTNode`
 
 ```typescript
-type ASTNode = string | [string, Record<string, string> | null, ASTNode | ASTNode[]]
+type ASTNode = string | null | [string, Record<string, unknown> | null, ASTNode] | ASTNode[]
 ```
 
 ## Why Another Markdown Parser?

@@ -13542,7 +13542,7 @@
       "id": "fence-html",
       "html": {
         "status": "return",
-        "value": "<pre data-language=\"html\"><code><script>&</script></code></pre>",
+        "value": "<pre data-language=\"html\"><code>&lt;script&gt;&amp;&lt;/script&gt;</code></pre>",
         "diagnostics": [],
         "calls": []
       },

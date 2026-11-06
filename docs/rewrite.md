@@ -1,10 +1,10 @@
 # Scanner rewrite
 
-## State and scope
+## Initial rewrite (historical scope)
 
-Code-first; no domain spec covers this rewrite. Work stays in this worktree. Runtime exports and mapper/join/postprocess behavior remain unchanged. Frozen corpus, golden, legacy tests, bench harness and lockfile are read-only. Version stays 2.2.4. No network, publish, child agents or review broker.
+Code-first; no domain spec covers this rewrite. Work stays in this worktree. Runtime exports and mapper/join/postprocess behavior remain unchanged. The initial rewrite kept corpus, golden, legacy tests, bench harness and lockfile read-only. The follow-up below authorizes one security golden change and lockfile/test/harness maintenance. Version stays 2.2.4. No network, publish, child agents or review broker.
 
-Phase 1: inventory and baseline. Phase 2: scanner and exact compatibility. Phase 3: dependency removal, build/lint, unchanged benchmark harness, raw comparison. Evidence and recoverable raw are in src/rewrite-evidence/. Git checkpoints are attempted per phase; restricted Git metadata writes fall back to a local bundle.
+Phase 1: inventory and baseline. Phase 2: scanner and exact compatibility. Phase 3: dependency removal, build/lint, unchanged benchmark harness, raw comparison. Evidence and recoverable raw are in bench/results/rewrite-initial/. Git checkpoints are attempted per phase; restricted Git metadata writes fall back to a local bundle.
 
 ## Existing grammar (ordered alternatives)
 
@@ -30,13 +30,13 @@ Use one scanner state per parse, integer offsets and charCodeAt dispatch. Preser
 
 ## Evidence
 
-Phase 2: exact 1,722 comparisons and 178 legacy tests matched. Supplementary seeded differential checks compare the old source loaded from Git with the scanner, including stateful plugin return values and unusual line terminators. See raw command logs under src/rewrite-evidence/. No frozen test input or expected output changed. Review checkpoints are handled by the caller after this no-review run; no broker is invoked.
+Phase 2: exact 1,722 comparisons and 178 legacy tests matched. Supplementary seeded differential checks compare the old source loaded from Git with the scanner, including stateful plugin return values and unusual line terminators. See raw command logs under bench/results/rewrite-initial/. No frozen test input or expected output changed. Review checkpoints are handled by the caller after this no-review run; no broker is invoked.
 
 ## Measurement results
 
-Old raw: [baseline.json](../bench/results/baseline.json). New raw: [benchmark.json](../src/rewrite-evidence/benchmark.json), [fsynced child journal](../src/rewrite-evidence/benchmark.json.journal.jsonl). Every sample outcome digest is checked against the frozen golden. [Independent validation](../src/rewrite-evidence/raw-validation.txt) recalculates every percentile from sorted samples and checks every journal child.
+Old raw: [baseline.json](../bench/results/baseline.json). New raw: [benchmark.json](../bench/results/rewrite-initial/benchmark.json), [fsynced child journal](../bench/results/rewrite-initial/benchmark.json.journal.jsonl). Every sample outcome digest is checked against the frozen golden. [Independent validation](../bench/results/rewrite-initial/raw-validation.txt) recalculates every percentile from sorted samples and checks every journal child.
 
-Unmodified harness: npm run bench -- --output=bench/results/rewrite.json. The preload src/rewrite-evidence/redirect-bench.cjs redirects only candidate output IO to src/rewrite-evidence/benchmark.json and its journal because bench/ is read-only for this assignment. The harness, worker, stats, checkpoint and golden hashes are unchanged. NODE_OPTIONS records this preload in the new raw. It is loaded before timed work and its file wrappers do not run inside the measured parser/plugin callbacks. No dependencies were installed or fetched.
+Unmodified harness: npm run bench -- --output=bench/results/rewrite.json. The preload bench/results/rewrite-initial/redirect-bench.cjs redirects only candidate output IO to bench/results/rewrite-initial/benchmark.json and its journal because bench/ is read-only for this assignment. The harness, worker, stats, checkpoint and golden hashes are unchanged. NODE_OPTIONS records this preload in the new raw. It is loaded before timed work and its file wrappers do not run inside the measured parser/plugin callbacks. No dependencies were installed or fetched.
 
 Both runs: v26.12.1, V8 14.6.202.34-node.40, linux 7.0.0-38-generic x64, AMD Ryzen 5 3600 6-Core Processor. Sequential children, cold n=5, warm n=20 after 10 extra warmups, new Parser construction included, process/import/IO/GC outside timing, nearest-rank percentiles. Cold p95 with n=5 is the maximum, not a stable tail estimate. Signed net heap change is not allocation volume.
 
@@ -651,10 +651,52 @@ Long-document observations (ms, rounded to 3 decimals):
 
 ## Delivery and remaining integration work
 
-- src/parser.ts implements the scanner; asHTML/asAST/escapeHtml/exported parse implementations remain byte-for-byte unchanged. src/rewrite-evidence/ contains commands, raw outputs, supplementary checks and delivery tooling, and is excluded by the existing package files whitelist (only compiled lib/src is shipped).
+- src/parser.ts implements the scanner; asHTML/asAST/escapeHtml/exported parse implementations remain byte-for-byte unchanged. bench/results/rewrite-initial/ contains commands, raw outputs, supplementary checks and delivery tooling, and is outside src/; only compiled product code is shipped by the package files whitelist.
 - package.json removes parsimmon and @types/parsimmon; name and version remain @minamorl/markdown-next 2.2.4. README changes only the Parsimmon sentence.
-- Frozen corpus/golden, existing test/test-parser.ts, all bench files and pnpm-lock.yaml retain their pre-run hashes. The assignment forbids lockfile edits, so the lockfile still has the old dependency importer; the caller must reconcile it before a frozen-lockfile install or release. No install, network transmission or npm publish was performed.
-- Normal git add failed with read-only Git metadata (raw: src/rewrite-evidence/git-checkpoint.txt). checkpoint.cjs uses a private Git directory under TMPDIR and exports src/rewrite-evidence/rewrite.bundle with phase commits based on 55c0a76. It does not change the current worktree's HEAD/index or write shared Git metadata. The bundle requires that base commit and can be fetched into an integration checkout by the caller.
+- Historical initial delivery: corpus/golden, legacy tests, bench files and lockfile retained their initial hashes. The lockfile follow-up is resolved below. No network transmission or npm publish was performed.
+- Normal git add failed with read-only Git metadata (raw: bench/results/rewrite-initial/git-checkpoint.txt). checkpoint.cjs uses a private Git directory under TMPDIR and exports bench/results/rewrite-initial/rewrite.bundle with phase commits based on 55c0a76. It does not change the current worktree's HEAD/index or write shared Git metadata. The bundle requires that base commit and can be fetched into an integration checkout by the caller.
 - Initial compatibility mismatches and lint errors are retained in first-attempt logs; final gate logs supersede them. Existing lint warnings in test/test-parser.ts remain untouched.
 - Checkpoint review requested of caller, before expensive execution: confirm unchanged benchmark/golden logic, preflight hashes and completed characterization gates. No review broker was invoked in this no-review run.
 - Checkpoint review requested of caller, at lane end: independently inspect scanner compatibility, raw comparison/provenance, scope hashes, lockfile follow-up and bundle before integration/release. No child agent was started here.
+
+
+## Follow-up: security, consumer examples and install integrity
+
+The caller accepted initial rewrite eb825d9 and authorized these changes. All initial evidence has moved, byte-for-byte, from src/rewrite-evidence/ to bench/results/rewrite-initial/. Scripts and embedded paths in that archive describe the original run; they are historical evidence, not current validation entrypoints. src/ now contains only parser.ts. Current commands and outputs are in bench/followup/.
+
+Decisions:
+
+- Encode `&`, `<`, `>` in Markdown code span/fence HTML output only; quotes remain literal in a text node. The built-in asHTML mapper (including a spread-copy exporter) receives escaped code text. AST/custom exporters keep source text. Raw HTML, including a literal HTML code element, keeps passthrough behavior. Untrusted input still requires sanitization; code encoding does not sanitize URLs or plugin output.
+- Export ASTNode as a type only. It includes null children and recursively nested join groups as actually emitted. No runtime export or AST result changes.
+- Correct both heading examples to their existing plain-text heading plus following paragraph. The React example distinguishes an element tuple from a group of children and handles null; this fixes example rendering, without changing the parser. Every README TypeScript/TSX block is compiled as an isolated consumer against lib/src/parser.d.ts. Its runtime expressions and four React component examples are compared with test/readme-expected.json. The shell install example is checked as a command string, not executed over the network; pure type declarations have no runtime output.
+- Use real React 19.2.4 and @types/react 19.2.14 as development dependencies for these consumer tests (transitive csstype 3.2.3); no production dependency is added. The installed official React declarations for ReactNode/createElement and local TypeScript declarations/compiler are the API source read. Everything was available in the local package store; no network request was made.
+- Synchronize lockfile by removing the two obsolete Parsimmon importer/package/snapshot entries. An offline full resolution first failed on missing registry metadata for already-locked @pkgjs/parseargs. Existing development resolutions are preserved; pnpm generated the three React test-package resolutions in an isolated TMPDIR project, which were merged into the lockfile. The actual worktree then completed pnpm install --offline --frozen-lockfile --frozen-store --ignore-scripts --trust-lockfile with no resolution/download. Frozen-store prevents writes to the shared store. Version remains 2.2.4.
+- The benchmark metadata now allows an absent Parsimmon package and records null. This is the only harness logic change; timing, sample counts, workers, percentile calculations and per-sample golden checks are unchanged. The original baseline and first scanner measurements are preserved.
+
+### Complete permitted golden change list
+
+Only fence-html / html.value changes. Its input is:
+
+````text
+```html
+<script>&</script>
+```
+````
+
+Old HTML:
+
+```html
+<pre data-language="html"><code><script>&</script></code></pre>
+```
+
+New HTML:
+
+```html
+<pre data-language="html"><code>&lt;script&gt;&amp;&lt;/script&gt;</code></pre>
+```
+
+bench/followup/security-golden.cjs independently applies text encoding only to the accepted scanner's two Markdown-code productions, and compares every current output. It also checks the entire saved golden against that permitted result. Every AST entry, plugin trace, diagnostic, status, corpus and other golden field remains identical. The precise input/before/after data is in bench/followup/golden-code-escaping.json. test/security.test.cjs adds coverage for code spans/fences, longer backtick runs, list/quote/table contexts, closing-tag injection, entity double encoding, raw AST/custom exporters, spread-copy asHTML and deliberate HTML passthrough.
+
+### Current gate results
+
+Pending final command outputs and full benchmark. No agent-lane-review broker is called. Before-expensive-run review requested of caller: independently check the single-field golden diff, security reference, consumer snapshots and unchanged benchmark timing logic. End-of-lane review requested of caller: verify artifact scope, install integrity, output safety, performance/provenance and Git delivery before release.

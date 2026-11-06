@@ -7,6 +7,11 @@ const { execFileSync } = require('node:child_process');
 const { root, read, hash, write } = require('../test/characterization/support.cjs');
 const { summarize } = require('./stats.cjs');
 const { loadJournal, appendRecord } = require('./checkpoint.cjs');
+// Parsimmon is historical provenance, not a benchmark or parser dependency.
+let parsimmonVersion = null;
+try { parsimmonVersion = require('parsimmon/package.json').version; }
+catch (error) { if (error.code !== 'MODULE_NOT_FOUND') throw error; }
+
 
 const options = { samples: 5, 'warm-samples': 20, warmup: 10, output: 'bench/results/baseline.json', case: '', resume: false };
 for (const arg of process.argv.slice(2)) {
@@ -44,7 +49,7 @@ const identity = {
     node: process.version, v8: process.versions.v8, platform: process.platform, arch: process.arch,
     release: os.release(), cpu: os.cpus()[0]?.model || 'unknown',
     nodeOptions: process.env.NODE_OPTIONS || '', execArgv: process.execArgv,
-    parsimmon: require('parsimmon/package.json').version,
+    parsimmon: parsimmonVersion,
   },
 };
 fs.mkdirSync(path.dirname(output), { recursive: true });
@@ -117,7 +122,7 @@ write(path.relative(root, output), {
     loadBefore: records[0].loadBefore, loadAfter: os.loadavg(),
     nodeOptions: process.env.NODE_OPTIONS || '', execArgv: process.execArgv,
     childExecArgv: ['--expose-gc'],
-    parsimmon: require('parsimmon/package.json').version,
+    parsimmon: parsimmonVersion,
     typescript: require('typescript/package.json').version,
     mocha: require('mocha/package.json').version,
   },

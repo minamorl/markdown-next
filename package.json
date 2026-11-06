@@ -7,15 +7,16 @@
     "build": "tsc",
     "example": "cd examples && webpack",
     "prepublish": "pnpm run build",
-    "test": "pnpm run build && mocha lib/test",
-    "test:characterization": "npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs",
+    "test": "pnpm run build && mocha lib/test && node --test test/readme.test.cjs test/security.test.cjs",
+    "test:characterization": "npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs && node bench/followup/security-golden.cjs",
     "characterization:freeze": "npm run build && node test/characterization/freeze.cjs",
     "bench": "npm run build && node bench/run.cjs",
     "bench:verify": "node bench/verify.cjs",
     "lint": "eslint src test",
     "lint:fix": "eslint src test --fix",
     "format": "prettier --write 'src/**/*.ts' 'test/**/*.ts'",
-    "format:check": "prettier --check 'src/**/*.ts' 'test/**/*.ts'"
+    "format:check": "prettier --check 'src/**/*.ts' 'test/**/*.ts'",
+    "test:readme": "npm run build && node --test test/readme.test.cjs"
   },
   "author": "minamorl",
   "license": "MIT",
@@ -36,7 +37,9 @@
     "prettier": "^3.8.1",
     "typescript": "^6.0.2",
     "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2"
+    "webpack-cli": "^7.0.2",
+    "react": "19.2.4",
+    "@types/react": "19.2.14"
   },
   "dependencies": {},
   "repository": {
