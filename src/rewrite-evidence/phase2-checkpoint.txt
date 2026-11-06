@@ -1,1 +1,16 @@
 command: ["node","src/rewrite-evidence/checkpoint.cjs","refactor: replace Parsimmon grammar with cursor scanner"]
+commit: 210af595216d2e59bcb552ae25803a2077b288ff
+/home/minamorl/repos/.worktrees/markdown-next/rewrite/src/rewrite-evidence/rewrite.bundle is okay
+The bundle contains this ref:
+210af595216d2e59bcb552ae25803a2077b288ff refs/heads/rewrite
+The bundle requires this ref:
+55c0a76db2299f04330f81c1efbb2e4b3512e54b 
+The bundle uses this hash algorithm: sha1
+
+210af59 refactor: replace Parsimmon grammar with cursor scanner
+08245d2 docs: inventory legacy grammar before scanner rewrite
+55c0a76 test: freeze current markdown-next behavior and record parse baseline
+f71fb55 Merge pull request #7 from minamorl/lane/node-security-20261021-mac-integration
+
+
+exit_code: 0; signal: null

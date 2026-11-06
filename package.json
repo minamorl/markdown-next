@@ -38,10 +38,7 @@
     "webpack": "^5.105.4",
     "webpack-cli": "^7.0.2"
   },
-  "dependencies": {
-    "@types/parsimmon": "^1.10.9",
-    "parsimmon": "^1.18.1"
-  },
+  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/minamorl/markdown-next.git"

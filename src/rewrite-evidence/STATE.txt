@@ -1,0 +1,12 @@
+Goal: Replace Parsimmon parser with a compatible cursor scanner; do not publish or send data externally.
+Constraints: Changes only src/, dependency entries of package.json without version change, README Parsimmon sentence, docs/rewrite.md. Frozen tests/golden/corpus, bench and lockfile are read-only. No children, no review broker.
+Known: 1722 characterization comparisons and 178 mocha tests matched. Seeded differential 10030 comparisons matched. Lint exit 0 with two pre-existing test warnings. No runtime Parsimmon import (preflight module-load rejection).
+Decisions: One scanner state; context-specific token dispatch; replay final-line plugin callbacks using saved tokens; preserve exporters byte-for-byte and unusual legacy outputs.
+Changed: src/parser.ts, src/rewrite-evidence/, package.json dependencies, README sentence, docs/rewrite.md.
+Evidence: final-characterization.txt, final-mocha.txt, final-differential.txt, evidence-lint.txt, preflight.txt.
+Failures: First differential exposed multiline whitespace matching in headings; fixed. First golden check exposed ASCII range in paragraph regex; fixed. Evidence helper globals caused lint errors; fixed. Normal Git index writes denied; use private Git directory under TMPDIR and local bundle.
+Final state: Scanner implementation and assigned verification gates are GREEN. Full benchmark finished with exit_code 0; raw validation covers 574 rows and every observation, independent percentiles and journal consistency. docs/rewrite.md includes grammar, decisions, all old/new p50/p95 and integration notes.
+Next: Final checkpoint exports bundle, verifies its source tree matches this worktree, and reports artifact ls output. Caller then performs independent verifier and integration.
+Review requested (before expensive run): unchanged harness/golden, negative controls, preflight hashes and exact compatibility evidence.
+Review requested (lane end): scanner compatibility/public consumer API, observed performance/provenance, unchanged scope and local bundle before integration/release.
+Pending integration: lockfile importer still includes old dependencies because lockfile edits are forbidden. Caller performs final verifier, lockfile reconciliation, integration and release outside this assignment.

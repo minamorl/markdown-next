@@ -1,6 +1,6 @@
 # @minamorl/markdown-next
 
-A markdown parser that outputs either HTML strings or an AST you can render however you want. Built with [Parsimmon](https://github.com/jneen/parsimmon).
+A markdown parser that outputs either HTML strings or an AST you can render however you want. Built with a hand-written scanner.
 
 What makes it different:
 - **AST output** for React/Vue/custom renderers (not just HTML strings)

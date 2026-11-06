@@ -652,7 +652,7 @@ class Scanner<T> {
       const text = this.value
       this.p = this.newline(this.p)
       if (column % 2 !== 1) {
-        this.owner.resetTree()
+        resetTree(this.owner)
         this.p = lineStart
         break
       }
@@ -677,7 +677,7 @@ class Scanner<T> {
     }
     this.owner.rootTree.type = firstType
     this.value = this.listTree(this.owner.rootTree)
-    this.owner.resetTree()
+    resetTree(this.owner)
     return true
   }
 
@@ -851,6 +851,10 @@ class Scanner<T> {
   }
 }
 
+function resetTree<T>(owner: Parser<T>) {
+  owner.rootTree = owner.currentTree = { value: null, children: [], type: 'shadow', parent: null }
+}
+
 export class Parser<T> {
   liLevelBefore: number | null = null
   liLevel: number | null = null
@@ -859,12 +863,8 @@ export class Parser<T> {
   acceptables!: { parse: (input: string) => ParseSuccess<T> | ParseFailure }
 
   constructor(public opts: { export: ExportType<T>; plugins?: { [pluginName: string]: Plugin<T> } }) {
-    this.resetTree()
+    resetTree(this)
     this.create()
-  }
-
-  resetTree() {
-    this.rootTree = this.currentTree = { value: null, children: [], type: 'shadow', parent: null }
   }
 
   create() {
@@ -873,7 +873,7 @@ export class Parser<T> {
 
   parse(s: string) {
     this.liLevelBefore = this.liLevel = null
-    this.resetTree()
+    resetTree(this)
     let start = 0,
       end = s.length
     while (start < end && whitespace(s.charCodeAt(start)) && s.charCodeAt(start) !== 12288) start++
