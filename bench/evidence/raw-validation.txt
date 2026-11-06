@@ -1,0 +1,28 @@
+Validated 574 input/mode rows; cold=2870, warm=11480, total=14350; journal children=2870.
+Every raw output digest/status and every p50/p95/heap median match golden and independent sorted recalculation.
+Source, corpus, golden and harness hashes match; journal matches final JSON exactly.
+Exception observations=75; negative net heap deltas=2405 (not allocation totals).
+Node=v26.12.1; V8=14.6.202.34-node.40; CPU=AMD Ryzen 5 3600 6-Core Processor; OS=linux 7.0.0-38-generic x64
+logicalCPUs=12; availableParallelism=12; loadBefore=13.44,13.36,14.94; loadAfter=30.52,30.78,23.71
+began=2026-11-06T17:30:56.825Z; ended=2026-11-06T17:39:55.821Z
+| input | mode | cold p50 ms | cold p95 ms | warm p50 ms | warm p95 ms | warm net heap p50 KiB |
+|---|---|---:|---:|---:|---:|---:|
+| long-ja-1000 | html | 21.181 | 27.489 | 7.418 | 13.018 | 137.6 |
+| long-ja-1000 | ast | 21.413 | 33.187 | 6.332 | 7.220 | 89.2 |
+| long-en-1000 | html | 19.552 | 22.860 | 4.669 | 7.165 | 1435.4 |
+| long-en-1000 | ast | 28.554 | 64.197 | 4.028 | 6.298 | 1396.4 |
+| long-mixed-1000 | html | 38.233 | 52.716 | 3.869 | 15.424 | 634.3 |
+| long-mixed-1000 | ast | 24.253 | 46.483 | 3.951 | 6.158 | 596.1 |
+| long-ja-10000 | html | 104.741 | 137.003 | 80.715 | 135.862 | -1672.9 |
+| long-ja-10000 | ast | 124.802 | 234.196 | 55.934 | 97.067 | -2165.7 |
+| long-en-10000 | html | 78.477 | 103.532 | 52.672 | 79.176 | -422.2 |
+| long-en-10000 | ast | 76.458 | 85.345 | 43.129 | 65.202 | 3132.3 |
+| long-mixed-10000 | html | 97.566 | 170.439 | 42.754 | 85.487 | 2946.7 |
+| long-mixed-10000 | ast | 83.129 | 91.674 | 42.038 | 114.694 | 2795.5 |
+| long-ja-60000 | html | 488.318 | 934.287 | 469.183 | 601.758 | 1972.6 |
+| long-ja-60000 | ast | 269.650 | 344.972 | 218.914 | 302.603 | 15800.3 |
+| long-en-60000 | html | 180.843 | 188.431 | 155.087 | 197.885 | 1984.1 |
+| long-en-60000 | ast | 169.116 | 183.552 | 161.741 | 201.550 | -145.9 |
+| long-mixed-60000 | html | 174.147 | 281.151 | 131.181 | 178.204 | -2483.7 |
+| long-mixed-60000 | ast | 242.136 | 281.298 | 140.737 | 157.306 | -3738.2 |
+exit_code=0

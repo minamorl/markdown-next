@@ -1,0 +1,15 @@
+
+/home/minamorl/repos/.worktrees/markdown-next/freeze-and-bench/src/parser.ts
+    3:11  warning  'IndexType' is defined but never used                                              @typescript-eslint/no-unused-vars
+   75:11  warning  'asterisk' is assigned a value but never used                                      @typescript-eslint/no-unused-vars
+   79:11  warning  'equal' is assigned a value but never used                                         @typescript-eslint/no-unused-vars
+   80:11  warning  'minus' is assigned a value but never used                                         @typescript-eslint/no-unused-vars
+  536:59  warning  'isRoot' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/minamorl/repos/.worktrees/markdown-next/freeze-and-bench/test/test-parser.ts
+  299:23  warning  'str' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+  577:70  warning  'join' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 7 problems (0 errors, 7 warnings)
+
+exit_code=0

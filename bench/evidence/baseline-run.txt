@@ -1,0 +1,22 @@
+
+> @minamorl/markdown-next@2.2.4 bench
+> npm run build && node bench/run.cjs
+
+
+> @minamorl/markdown-next@2.2.4 build
+> tsc
+
+Measured 25/287 inputs (HTML + AST).
+Measured 50/287 inputs (HTML + AST).
+Measured 75/287 inputs (HTML + AST).
+Measured 100/287 inputs (HTML + AST).
+Measured 125/287 inputs (HTML + AST).
+Measured 150/287 inputs (HTML + AST).
+Measured 175/287 inputs (HTML + AST).
+Measured 200/287 inputs (HTML + AST).
+Measured 225/287 inputs (HTML + AST).
+Measured 250/287 inputs (HTML + AST).
+Measured 275/287 inputs (HTML + AST).
+Measured 287/287 inputs (HTML + AST).
+Raw samples + p50/p95: bench/results/baseline.json
+exit_code=0

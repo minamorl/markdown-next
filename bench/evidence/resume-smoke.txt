@@ -1,0 +1,7 @@
+Simulated interrupted journal after three real child samples, with a torn final line and incomplete final JSON.
+Resuming 3 saved child measurements from bench/results/resume-smoke.json.journal.jsonl.
+Measured 1/1 inputs (HTML + AST).
+Raw samples + p50/p95: bench/results/resume-smoke.json
+
+Saved samples preserved exactly; final JSON rebuilt; 10 child records and both modes present.
+exit_code=0

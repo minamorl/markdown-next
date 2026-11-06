@@ -1,0 +1,6 @@
+corpus/golden digest and baseline source digest match; src, legacy tests and lockfile diff empty.
+cold uses one execFileSync per first parse; warm runs after 10 warmups; hash/IO are outside timer (bench/run.cjs, worker.cjs, support.cjs inspected).
+Resume smoke preserved saved samples and recovered torn journal + incomplete final JSON (resume-smoke.txt).
+Characterization and negative controls: characterization.txt; nearest-rank n=5 p95=max explicitly tested.
+Proceed with sequential full-corpus benchmark. No other test/build workload will run during measurement.
+exit_code=0

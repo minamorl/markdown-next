@@ -1,0 +1,3 @@
+Measured 1/1 inputs (HTML + AST).
+Raw samples + p50/p95: bench/results/smoke.json
+exit_code=0

@@ -1,0 +1,67 @@
+Environment: cwd=/home/minamorl/repos/.worktrees/markdown-next/freeze-and-bench
+Baseline: f71fb55dd35cd102c64135ae15a9837ee3ca6b21 (local main and origin/main)
+
+Initial attempt: pnpm test
+exit_code=1; pnpm 11 attempted automatic install and failed opening the workspace-external SQLite store.
+No dependency install or lockfile modification was completed.
+
+node node_modules/typescript/bin/tsc
+node node_modules/mocha/bin/mocha.js lib/test
+Output: initial-tests.txt (combined); exit_code=0
+
+pnpm_config_verify_deps_before_run=false pnpm test
+Output: initial-pnpm-tests.txt; exit_code=0
+
+node test/characterization/freeze.cjs
+Output: freeze.txt; exit_code=0
+
+npm run test:characterization
+Output: characterization.txt; exit_code=0
+
+node node_modules/eslint/bin/eslint.js test/characterization bench
+Output: harness-lint.txt (latest run)
+
+Resume implementation: checkpoint.cjs persists one JSONL record + fsync per validated child;
+run.cjs --resume=true validates identity and reconstructs partial final JSON.
+
+node bench/run.cjs --case=plugin-inline --warm-samples=5 --output=bench/results/smoke.json
+Output: smoke-run.txt; exit_code=0
+
+node - (synthetic interruption/recovery probe)
+Input: first three actual child records from smoke.json.journal.jsonl, retaining their raw samples;
+header output/harness identity adjusted to resume-smoke.json, append torn JSONL line,
+write incomplete final JSON, then execute:
+node bench/run.cjs --case=plugin-inline --warm-samples=5 --output=bench/results/resume-smoke.json --resume=true
+Output: resume-smoke.txt; exit_code=0; deep equality of saved samples checked.
+
+node - (preflight: corpus/golden/source digests, unchanged src/legacy tests/lockfile,
+resume smoke result counts, direct inspection of timer/cold/warm paths)
+Output: preflight.txt; exit_code=0
+
+npm run bench
+Output: baseline-run.txt; exit_code=0
+Raw: bench/results/baseline.json
+Persistent per-child raw: bench/results/baseline.json.journal.jsonl
+
+node - (independent raw validation and Markdown table extraction)
+Output: raw-validation.txt; exit_code=0
+The independent checks are preserved as bench/verify.cjs and can be repeated with:
+npm run bench:verify
+Output: final-raw-validation.txt; exit_code=0
+
+npm run test:characterization
+node node_modules/mocha/bin/mocha.js lib/test
+Output: final-checks.txt (combined); exit_code=0
+
+node node_modules/eslint/bin/eslint.js src test bench
+Output: final-lint.txt; exit_code=0 (7 warnings in unchanged src/legacy tests)
+
+Checkpoint broker returned broker_lost (exit_code=3) in the initial run.
+The root's subsequent instruction explicitly disabled checkpoint calls and requested
+self-review before measurement and a root-owned verifier after this worker exits.
+No agent-lane-review call was made after that instruction. No agent was spawned.
+
+git add -- package.json test/characterization bench docs/rewrite-baseline.md
+Output: git-delivery.txt; exit_code=128 (Git administration directory is read-only).
+The following staged diff checks and commit could not run. Root must commit from a context
+authorized to write the linked worktree's existing Git administration directory.
