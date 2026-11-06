@@ -1,5 +1,5 @@
 {
-  "name": "@minamorl/markdown-next",
+  "name": "@rainpulse/markdown-next",
   "description": "Markdown parser with Aozora bunko ruby support and HTML passthrough",
   "main": "./lib/src/parser.js",
   "types": "./lib/src/parser.d.ts",
@@ -50,5 +50,5 @@
     "url": "https://github.com/minamorl/markdown-next/issues"
   },
   "homepage": "https://github.com/minamorl/markdown-next#readme",
-  "version": "2.2.4"
+  "version": "2.3.0"
 }

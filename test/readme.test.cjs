@@ -43,7 +43,7 @@ function exerciseReadme() {
     const files = [];
     for (const block of blocks) {
       if (block.language === 'bash') {
-        assert.equal(block.code.trim(), 'npm install @minamorl/markdown-next');
+        assert.equal(block.code.trim(), 'npm install @rainpulse/markdown-next');
         continue;
       }
       assert.ok(['typescript', 'tsx'].includes(block.language), 'Every README code block needs an explicit test treatment');
@@ -60,7 +60,7 @@ function exerciseReadme() {
       jsx: 'react', outDir: 'out', types: ['node', 'react'],
       typeRoots: [path.join(root, 'node_modules/@types')],
       paths: {
-        '@minamorl/markdown-next': [path.join(root, 'lib/src/parser.d.ts')],
+        '@rainpulse/markdown-next': [path.join(root, 'lib/src/parser.d.ts')],
         react: [path.join(root, 'node_modules/@types/react/index.d.ts')],
       },
     }, files }));
@@ -76,7 +76,7 @@ function exerciseReadme() {
       const output = [];
       sample.capture = value => { output.push(value); return value; };
       const ordinaryRequire = sample.require.bind(sample);
-      sample.require = name => name === '@minamorl/markdown-next' ? require('../lib/src/parser.js') : name === 'react' ? React : ordinaryRequire(name);
+      sample.require = name => name === '@rainpulse/markdown-next' ? require('../lib/src/parser.js') : name === 'react' ? React : ordinaryRequire(name);
       sample._compile('const __readmeCapture = module.capture;\n' + fs.readFileSync(filename, 'utf8'), filename);
       if (block.language === 'tsx') {
         const { Markdown } = sample.exports.readmeComponents;
