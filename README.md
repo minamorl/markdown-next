@@ -100,7 +100,9 @@ The `｜` (full-width pipe) marks the start of the base text, and `《》` conta
 
 ## HTML Passthrough
 
-HTML passthrough is intentional. Output is **not sanitized**: sanitize HTML from untrusted input before inserting it into a page, including plugin output and link/image URLs. Markdown code spans and fences escape `&`, `<`, and `>` as literal text.
+HTML passthrough is intentional. Output is **not sanitized**: sanitize HTML from untrusted input before inserting it into a page, including HTML attributes, plugin output and link/image URLs. Event handlers and dangerous attribute URLs are preserved. Attribute values are decoded from HTML character references and escaped when exported as HTML; escaping is not sanitization. Markdown code spans and fences escape `&`, `<`, and `>` as literal text.
+
+HTML attributes keep their source order in HTML output and AST attribute objects. Single-quoted, double-quoted, unquoted and boolean attributes are accepted (boolean attributes have an empty string value). The first occurrence of a duplicate attribute wins, ignoring case. The existing paired-tag grammar is unchanged; `br` and `hr` also accept attributes.
 
 Sometimes you need HTML that markdown doesn't support. Just write it:
 

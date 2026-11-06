@@ -12529,7 +12529,7 @@
       "id": "html-attrs",
       "html": {
         "status": "return",
-        "value": "<p><div>text</div></p>",
+        "value": "<p><div class=\"x\" data-id=\"1\">text</div></p>",
         "diagnostics": [],
         "calls": []
       },
@@ -12542,7 +12542,10 @@
             [
               [
                 "div",
-                null,
+                {
+                  "class": "x",
+                  "data-id": "1"
+                },
                 "text"
               ]
             ]
@@ -12556,7 +12559,7 @@
       "id": "html-mismatch",
       "html": {
         "status": "return",
-        "value": "<p><b>text</i></p>",
+        "value": "<p><b class=\"x\">text</i></p>",
         "diagnostics": [],
         "calls": []
       },
@@ -12568,7 +12571,7 @@
             null,
             [
               [
-                "<b>",
+                "<b class=\"x\">",
                 "text",
                 "</i>"
               ]

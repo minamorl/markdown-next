@@ -1,3 +1,5 @@
+import { htmlEntities } from './html-entities'
+
 export interface ListTree {
   type: 'ul' | 'ol' | 'shadow'
   children: Array<ListTree>
@@ -305,10 +307,68 @@ class Scanner<T> {
     if ((b !== 98 && b !== 104) || this.c(start + 2) !== 114) return false
     let i = this.skipSpace(start + 3)
     if (this.c(i) === 47) i++
-    if (this.c(i) !== 62) return false
+    if (this.c(i) !== 62) {
+      const attributes = this.htmlAttributes(start + 3, true)
+      if (!attributes || !attributes.value) return false
+      this.p = attributes.end
+      this.value = this.node(b === 98 ? 'br' : 'hr', null, attributes.value)
+      return true
+    }
     this.p = i + 1
     this.value = this.node(b === 98 ? 'br' : 'hr', null)
     return true
+  }
+
+  private htmlAttributes(i: number, selfClosing = false): { end: number; value?: Record<string, string> } | null {
+    let value: Record<string, string> | undefined
+    const names: string[] = []
+    while (i < this.end) {
+      const beforeSpace = i
+      i = this.skipSpace(i)
+      if (selfClosing && this.c(i) === 47 && this.c(i + 1) === 62) i++
+      if (this.c(i) === 62) {
+        // Ordinary object enumeration sorts integer names; retain source order there too.
+        if (value && Object.keys(value).some((key, index) => key !== names[index])) {
+          value = new Proxy(value, { ownKeys: () => names.slice() })
+        }
+        return { end: i + 1, value }
+      }
+      if (i === beforeSpace) return null
+      const nameStart = i
+      while (i < this.end && !whitespace(this.c(i)) && !'\"\'<>/='.includes(this.input[i])) i++
+      if (i === nameStart) return null
+      const name = this.input.slice(nameStart, i)
+      let text = ''
+      const nameEnd = i
+      i = this.skipSpace(i)
+      if (this.c(i) === 61) {
+        i = this.skipSpace(i + 1)
+        const quote = this.c(i)
+        if (quote === 34 || quote === 39) {
+          const textStart = ++i
+          while (i < this.end && this.c(i) !== quote) i++
+          if (i === this.end) return null
+          text = this.input.slice(textStart, i++)
+        } else {
+          const textStart = i
+          while (i < this.end && !whitespace(this.c(i)) && this.c(i) !== 62) {
+            if ('\"\'<=`'.includes(this.input[i])) return null
+            i++
+          }
+          if (i === textStart) return null
+          text = this.input.slice(textStart, i)
+        }
+      } else {
+        i = nameEnd
+      }
+      // First duplicate wins, as in HTML. defineProperty also safely retains __proto__.
+      if (!names.some(key => key.toLowerCase() === name.toLowerCase())) {
+        value ??= {}
+        Object.defineProperty(value, name, { value: decodeAttribute(text), enumerable: true, configurable: true, writable: true })
+        names.push(name)
+      }
+    }
+    return null
   }
 
   private html(): boolean {
@@ -317,12 +377,11 @@ class Scanner<T> {
     let i = start + 2
     while (letter(this.c(i)) || digit(this.c(i))) i++
     const tagEnd = i
-    if (whitespace(this.c(i))) {
-      while (i < this.end && this.c(i) !== 62) i++
-    }
-    if (this.c(i) !== 62) return false
+    const attributes = this.htmlAttributes(i)
+    if (!attributes) return false
     const tag = this.input.slice(start + 1, tagEnd)
-    this.p = i + 1
+    if (attributes.value && (tag === 'br' || tag === 'hr')) return false
+    this.p = attributes.end
     const children: any[] = []
     while (this.p < this.end) {
       if (this.c(this.p) === 60) {
@@ -351,8 +410,12 @@ class Scanner<T> {
     this.p = i + 1
     this.value =
       tag.toLowerCase() === closeTag.toLowerCase()
-        ? this.node(tag, this.join(children))
-        : this.join(['<' + tag + '>', ...children, '</' + closeTag + '>'])
+        ? this.node(tag, this.join(children), attributes.value)
+        : this.join([
+            '<' + tag + (attributes.value ? Object.keys(attributes.value).map(name => ` ${name}="${escapeHtml(attributes.value![name])}"`).join('') : '') + '>',
+            ...children,
+            '</' + closeTag + '>',
+          ])
     return true
   }
 
@@ -916,6 +979,33 @@ function escapeHtml(text: string): string {
     "'": '&#39;',
   }
   return text.replace(/[&<>"']/g, (m) => map[m])
+}
+
+// HTML numeric references use these Windows-1252 replacements, even in UTF-8.
+const numericReferences: Record<number, number> = {
+  128: 8364, 130: 8218, 131: 402, 132: 8222, 133: 8230, 134: 8224, 135: 8225,
+  136: 710, 137: 8240, 138: 352, 139: 8249, 140: 338, 142: 381, 145: 8216,
+  146: 8217, 147: 8220, 148: 8221, 149: 8226, 150: 8211, 151: 8212, 152: 732,
+  153: 8482, 154: 353, 155: 8250, 156: 339, 158: 382, 159: 376,
+}
+
+function decodeAttribute(text: string): string {
+  return text.replace(/&(#(?:[xX][0-9a-fA-F]+|[0-9]+);?|[A-Za-z][A-Za-z0-9]{0,31};?)/g, (match, reference: string, offset: number) => {
+    if (reference[0] === '#') {
+      const hex = reference[1].toLowerCase() === 'x'
+      const code = parseInt(reference.slice(hex ? 2 : 1), hex ? 16 : 10)
+      return String.fromCodePoint(code === 0 || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)
+        ? 0xfffd : numericReferences[code] || code)
+    }
+    // Longest named match; legacy semicolonless references cannot precede = or alphanumerics in attributes.
+    for (let end = reference.length; end > 0; end--) {
+      const name = reference.slice(0, end)
+      if (!Object.prototype.hasOwnProperty.call(htmlEntities, name)) continue
+      if (!name.endsWith(';') && /[=A-Za-z0-9]/.test(text[offset + 1 + end] || '')) return match
+      return htmlEntities[name] + reference.slice(end)
+    }
+    return match
+  })
 }
 
 export const asHTML: ExportType<string> = {

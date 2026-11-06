@@ -1437,3 +1437,27 @@ exit_code: 0; signal: null
 ### Follow-up Git delivery
 
 Shared Git metadata is read-only. The local bundle is bench/followup/followup.bundle, with refs/heads/followup based on accepted commit eb825d9. bench/followup/git-delivery.txt records its final tip, bundle verification and tree comparison. Bundle files and their own delivery log are excluded from the committed tree to avoid self-reference. The caller performs independent end-of-lane verification, integration and release; no publish or child agent was run here. The recorded network deviation remains for that review.
+
+## 2.3.0 prepublication attribute correction
+
+Code-first, no domain spec. Only attribute-bearing inputs may change. Attributes are preserved in source order (including numeric names), duplicate names keep the first occurrence ignoring case, boolean values become empty strings, character references decode once in attribute context, and HTML serialization escapes values. No sanitization is performed. Paired-tag grammar, existing attribute-free br/hr behavior, and other attribute-free output stay unchanged. Mismatched tags retain their existing text-group AST shape, with the attributes now included in the opening-tag string.
+
+The complete changed frozen-input list is below. This comparison was written before golden.json was updated. All other 285 frozen inputs have identical HTML, AST, plugin calls, diagnostics and statuses. The original golden metadata remains historical provenance. bench/prepublish/verify-attributes.cjs checks the pinned pre-fix parser and golden independently, plus generated attribute-free combinations.
+
+### html-attrs
+
+Input: `<div class="x" data-id="1">text</div>`
+
+| exporter | old | new |
+|---|---|---|
+| html | `"<p><div>text</div></p>"` | `"<p><div class=\"x\" data-id=\"1\">text</div></p>"` |
+| ast | `[["p",null,[["div",null,"text"]]]]` | `[["p",null,[["div",{"class":"x","data-id":"1"},"text"]]]]` |
+
+### html-mismatch
+
+Input: `<b class="x">text</i>`
+
+| exporter | old | new |
+|---|---|---|
+| html | `"<p><b>text</i></p>"` | `"<p><b class=\"x\">text</i></p>"` |
+| ast | `[["p",null,[["<b>","text","</i>"]]]]` | `[["p",null,[["<b class=\"x\">","text","</i>"]]]]` |

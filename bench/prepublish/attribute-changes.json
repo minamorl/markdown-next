@@ -1,0 +1,121 @@
+[
+  {
+    "id": "html-attrs",
+    "input": "<div class=\"x\" data-id=\"1\">text</div>",
+    "before": {
+      "id": "html-attrs",
+      "html": {
+        "status": "return",
+        "value": "<p><div>text</div></p>",
+        "diagnostics": [],
+        "calls": []
+      },
+      "ast": {
+        "status": "return",
+        "value": [
+          [
+            "p",
+            null,
+            [
+              [
+                "div",
+                null,
+                "text"
+              ]
+            ]
+          ]
+        ],
+        "diagnostics": [],
+        "calls": []
+      }
+    },
+    "after": {
+      "id": "html-attrs",
+      "html": {
+        "status": "return",
+        "value": "<p><div class=\"x\" data-id=\"1\">text</div></p>",
+        "diagnostics": [],
+        "calls": []
+      },
+      "ast": {
+        "status": "return",
+        "value": [
+          [
+            "p",
+            null,
+            [
+              [
+                "div",
+                {
+                  "class": "x",
+                  "data-id": "1"
+                },
+                "text"
+              ]
+            ]
+          ]
+        ],
+        "diagnostics": [],
+        "calls": []
+      }
+    }
+  },
+  {
+    "id": "html-mismatch",
+    "input": "<b class=\"x\">text</i>",
+    "before": {
+      "id": "html-mismatch",
+      "html": {
+        "status": "return",
+        "value": "<p><b>text</i></p>",
+        "diagnostics": [],
+        "calls": []
+      },
+      "ast": {
+        "status": "return",
+        "value": [
+          [
+            "p",
+            null,
+            [
+              [
+                "<b>",
+                "text",
+                "</i>"
+              ]
+            ]
+          ]
+        ],
+        "diagnostics": [],
+        "calls": []
+      }
+    },
+    "after": {
+      "id": "html-mismatch",
+      "html": {
+        "status": "return",
+        "value": "<p><b class=\"x\">text</i></p>",
+        "diagnostics": [],
+        "calls": []
+      },
+      "ast": {
+        "status": "return",
+        "value": [
+          [
+            "p",
+            null,
+            [
+              [
+                "<b class=\"x\">",
+                "text",
+                "</i>"
+              ]
+            ]
+          ]
+        ],
+        "diagnostics": [],
+        "calls": []
+      }
+    }
+  }
+]
