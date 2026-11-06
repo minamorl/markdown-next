@@ -1,7 +1,8 @@
+annotation: Package scope labels normalized to @minamorl/markdown-next after capture. Historical measurements, artifact filenames and digests are unchanged; this is not a fresh execution.
 command: ["npm","run","bench:verify"]
 environment: {"pnpm_config_verify_deps_before_run":"false"}
 
-> @rainpulse/markdown-next@2.3.0 bench:verify
+> @minamorl/markdown-next@2.3.0 bench:verify
 > node bench/verify.cjs
 
 Validated 574 input/mode rows; cold=2870, warm=11480, total=14350; journal children=2870.

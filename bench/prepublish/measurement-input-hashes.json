@@ -12,8 +12,8 @@
   "bench/checkpoint.cjs": "6605c9fa771e0318049f29cc72ae71ff7dc35c19fc4e4ccc8f8d9a2203043cd4",
   "bench/verify.cjs": "b4a272057914a8c00997e26267ac1a9db9cffb63ea6525ae9f1f9922d35e29e3",
   "bench/followup/verify-raw.cjs": "fbd5700b1a449adcb59ab17f39b8bb4591e144e8c43a266b89ff64c511830d30",
-  "README.md": "0e4b405dc51843d087c8859504ebd26f5406312ff54772c4901e1079166fd560",
-  "package.json": "b4345323b7d26b89e53d421dcede168800eb3a491227426ff4bf5ae92d81d7f7",
+  "README.md": "3ac63bf3f4735a2dd2cba54c4f39edfea8609e4a920a51d98cec8f8ea19cb37b",
+  "package.json": "9c87b4d908677966dd263ac90dcca683528c64d27afba7f5a276f41ba0bd6023",
   "pnpm-lock.yaml": "ecee5e9c3c1bcc5d80cb48564bbeb645b8d45335606acc5f16b9381959145b93",
   "examples/index.js": "628a10d44d86ea42a89eeb7f60cd608b16357ad8e9192232b790e4a6bd5a0160"
 }

@@ -1,4 +1,4 @@
-# @rainpulse/markdown-next
+# @minamorl/markdown-next
 
 A markdown parser that outputs either HTML strings or an AST you can render however you want. Built with a hand-written scanner.
 
@@ -11,7 +11,7 @@ What makes it different:
 ## Installation
 
 ```bash
-npm install @rainpulse/markdown-next
+npm install @minamorl/markdown-next
 ```
 
 ## Basic Usage
@@ -19,7 +19,7 @@ npm install @rainpulse/markdown-next
 The simplest way to get HTML:
 
 ```typescript
-import { parse } from '@rainpulse/markdown-next'
+import { parse } from '@minamorl/markdown-next'
 
 parse('# Hello **world**')
 // '<h1>Hello </h1><p><strong>world</strong></p>'
@@ -30,7 +30,7 @@ parse('# Hello **world**')
 If you're building a React app or need fine-grained control over rendering, use the AST output:
 
 ```typescript
-import { Parser, asAST } from '@rainpulse/markdown-next'
+import { Parser, asAST } from '@minamorl/markdown-next'
 
 const parser = new Parser({ export: asAST })
 const ast = parser.parse('# Hello **world**')
@@ -53,7 +53,7 @@ Here's a minimal renderer:
 
 ```tsx
 import * as React from 'react'
-import { Parser, asAST, type ASTNode } from '@rainpulse/markdown-next'
+import { Parser, asAST, type ASTNode } from '@minamorl/markdown-next'
 
 type ElementNode = [string, Record<string, unknown> | null, ASTNode]
 
@@ -87,7 +87,7 @@ function Markdown({ content }: { content: string }) {
 Supports [Aozora bunko](https://www.aozora.gr.jp/) ruby syntax, commonly used in Japanese publishing:
 
 ```typescript
-import { parse } from '@rainpulse/markdown-next'
+import { parse } from '@minamorl/markdown-next'
 
 parse('｜漢字《かんじ》')
 // '<p><ruby>漢字<rt>かんじ</rt></ruby></p>'
@@ -107,7 +107,7 @@ HTML attributes keep their source order in HTML output and AST attribute objects
 Sometimes you need HTML that markdown doesn't support. Just write it:
 
 ```typescript
-import { parse } from '@rainpulse/markdown-next'
+import { parse } from '@minamorl/markdown-next'
 
 parse('<cite>The Art of Computer Programming</cite>')
 // '<p><cite>The Art of Computer Programming</cite></p>'
@@ -124,7 +124,7 @@ parse('<details><summary>Click me</summary>Hidden content</details>')
 Define custom syntax with plugins. Useful for embeds, custom components, or domain-specific markup.
 
 ```typescript
-import { Parser, asHTML } from '@rainpulse/markdown-next'
+import { Parser, asHTML } from '@minamorl/markdown-next'
 
 const parser = new Parser({
   export: asHTML,
@@ -150,7 +150,7 @@ parser.parse(`
 
 Plugin function signature:
 ```typescript
-import type { Mapper } from '@rainpulse/markdown-next'
+import type { Mapper } from '@minamorl/markdown-next'
 
 type Plugin<T> = (
   args: string,           // Inline args omit the first colon; block args retain it
@@ -187,7 +187,7 @@ Quick function for HTML output.
 ### `Parser<T>`
 
 ```typescript
-import { Parser, asHTML } from '@rainpulse/markdown-next'
+import { Parser, asHTML } from '@minamorl/markdown-next'
 
 const parser = new Parser({
   export: asHTML,  // or asAST
