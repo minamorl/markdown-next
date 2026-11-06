@@ -1,0 +1,284 @@
+command: ["npm","run","test:characterization"]
+
+> @minamorl/markdown-next@2.2.4 test:characterization
+> npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs
+
+
+> @minamorl/markdown-next@2.2.4 build
+> tsc
+
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: legacy-016/ast
++ actual - expected
+... Skipped lines
+
+  {
+    calls: [],
+    diagnostics: [],
+    status: 'return',
+    value: [
+...
+          ],
++         ' elit. Pellentesque at urna diam. Ut vulputate ornare egestas. Vivamus fringilla molestie aliquam. Pellentesque elit dui, mollis nec augue vitae, lacinia iaculis dolor. Curabitur placerat tortor ut mauris consequat rhoncus. Sed nec nibh et diam dictum blandit. Morbi quis finibus nulla. Suspendisse sit amet tincidunt nisi. Morbi lacinia molestie purus eget dignissim. Maecenas pharetra elit tellus, ac congue dui finibus sit amet. Vivamus tempus at mauris vitae euismod. Cras lacus nulla, fermentum at varius vitae, varius ac elit. Nulla sit amet nibh in augue feugiat ultricies. Praesent eget mi imperdiet, dapibus augue sed, porttitor nulla. Nunc sed sodales ex. Nullam ut magna eget lectus luctus dapibus.'
+-         ' elit. ',
+-         'P',
+-         'ellentesque at urna diam. ',
+-         'U',
+-         't vulputate ornare egestas. ',
+-         'V',
+-         'ivamus fringilla molestie aliquam. ',
+-         'P',
+-         'ellentesque elit dui, mollis nec augue vitae, lacinia iaculis dolor. ',
+-         'C',
+-         'urabitur placerat tortor ut mauris consequat rhoncus. ',
+-         'S',
+-         'ed nec nibh et diam dictum blandit. ',
+-         'M',
+-         'orbi quis finibus nulla. ',
+-         'S',
+-         'uspendisse sit amet tincidunt nisi. ',
+-         'M',
+-         'orbi lacinia molestie purus eget dignissim. ',
+-         'M',
+-         'aecenas pharetra elit tellus, ac congue dui finibus sit amet. ',
+-         'V',
+-         'ivamus tempus at mauris vitae euismod. ',
+-         'C',
+-         'ras lacus nulla, fermentum at varius vitae, varius ac elit. ',
+-         'N',
+-         'ulla sit amet nibh in augue feugiat ultricies. ',
+-         'P',
+-         'raesent eget mi imperdiet, dapibus augue sed, porttitor nulla. ',
+-         'N',
+-         'unc sed sodales ex. ',
+-         'N',
+-         'ullam ut magna eget lectus luctus dapibus.'
+        ]
+      ],
+      [
+        'p',
+        null,
++       'Integer odio augue, rhoncus non velit ac, ultricies ornare libero. Vivamus fermentum lectus nec diam accumsan, in sodales leo pulvinar. Quisque eu sapien mauris. Integer sagittis cursus massa id eleifend. Vestibulum dignissim eleifend felis, in laoreet neque egestas at. Etiam elementum vel mauris id iaculis. Duis blandit at sapien ac viverra. Proin ac erat a mauris dignissim semper quis vel libero. In id massa id nibh malesuada ornare non volutpat risus. Pellentesque sem nibh, vehicula a dolor quis, volutpat sagittis magna. Mauris ipsum arcu, tempus vel sollicitudin ac, consectetur sed magna. Praesent tempor varius justo vitae convallis. Nam pharetra, lacus quis ultrices vehicula, risus arcu porta libero, ac pretium ex elit in nisl. Integer urna ante, hendrerit sollicitudin convallis et, finibus nec odio.'
+-       [
+-         'I',
+-         'nteger odio augue, rhoncus non velit ac, ultricies ornare libero. ',
+-         'V',
+-         'ivamus fermentum lectus nec diam accumsan, in sodales leo pulvinar. ',
+-         'Q',
+-         'uisque eu sapien mauris. ',
+-         'I',
+-         'nteger sagittis cursus massa id eleifend. ',
+-         'V',
+-         'estibulum dignissim eleifend felis, in laoreet neque egestas at. ',
+-         'E',
+-         'tiam elementum vel mauris id iaculis. ',
+-         'D',
+-         'uis blandit at sapien ac viverra. ',
+-         'P',
+-         'roin ac erat a mauris dignissim semper quis vel libero. ',
+-         'I',
+-         'n id massa id nibh malesuada ornare non volutpat risus. ',
+-         'P',
+-         'ellentesque sem nibh, vehicula a dolor quis, volutpat sagittis magna. ',
+-         'M',
+-         'auris ipsum arcu, tempus vel sollicitudin ac, consectetur sed magna. ',
+-         'P',
+-         'raesent tempor varius justo vitae convallis. ',
+-         'N',
+-         'am pharetra, lacus quis ultrices vehicula, risus arcu porta libero, ac pretium ex elit in nisl. ',
+-         'I',
+-         'nteger urna ante, hendrerit sollicitudin convallis et, finibus nec odio.'
+-       ]
+      ],
+      [
+        'p',
+        null,
++       'Morbi viverra lacus tortor, eu consectetur ante tempor quis. Fusce eu eros et nisi volutpat efficitur. Proin euismod id eros ut eleifend. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sed fermentum libero, ultrices commodo mi. Praesent auctor quis purus ut tristique. Mauris quis nunc nec augue congue dignissim eu et neque. Suspendisse potenti. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.'
+-       [
+-         'M',
+-         'orbi viverra lacus tortor, eu consectetur ante tempor quis. ',
+-         'F',
+-         'usce eu eros et nisi volutpat efficitur. ',
+-         'P',
+-         'roin euismod id eros ut eleifend. ',
+-         'L',
+-         'orem ipsum dolor sit amet, consectetur adipiscing elit. ',
+-         'S',
+-         'ed sed fermentum libero, ultrices commodo mi. ',
+-         'P',
+-         'raesent auctor quis purus ut tristique. ',
+-         'M',
+-         'auris quis nunc nec augue congue dignissim eu et neque. ',
+-         'S',
+-         'uspendisse potenti. ',
+-         'C',
+-         'lass aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.'
+-       ]
+      ],
+      [
+        'pre',
+        null,
+        [
+
+    at Object.<anonymous> (/home/minamorl/repos/.worktrees/markdown-next/rewrite/test/characterization/run.cjs:12:12)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: {
+    status: 'return',
+    value: [
+      [ 'h1', null, 'Lorem Ipsum' ],
+      [
+        'p',
+        null,
+        [
+          [ 'code', null, 'Lorem ipsum dolor' ],
+          ' sit amet, ',
+          [ 'a', [Object], 'consectetur' ],
+          ' ',
+          [ 'strong', null, 'adipiscing' ],
+          ' elit. Pellentesque at urna diam. Ut vulputate ornare egestas. Vivamus fringilla molestie aliquam. Pellentesque elit dui, mollis nec augue vitae, lacinia iaculis dolor. Curabitur placerat tortor ut mauris consequat rhoncus. Sed nec nibh et diam dictum blandit. Morbi quis finibus nulla. Suspendisse sit amet tincidunt nisi. Morbi lacinia molestie purus eget dignissim. Maecenas pharetra elit tellus, ac congue dui finibus sit amet. Vivamus tempus at mauris vitae euismod. Cras lacus nulla, fermentum at varius vitae, varius ac elit. Nulla sit amet nibh in augue feugiat ultricies. Praesent eget mi imperdiet, dapibus augue sed, porttitor nulla. Nunc sed sodales ex. Nullam ut magna eget lectus luctus dapibus.'
+        ]
+      ],
+      [
+        'p',
+        null,
+        'Integer odio augue, rhoncus non velit ac, ultricies ornare libero. Vivamus fermentum lectus nec diam accumsan, in sodales leo pulvinar. Quisque eu sapien mauris. Integer sagittis cursus massa id eleifend. Vestibulum dignissim eleifend felis, in laoreet neque egestas at. Etiam elementum vel mauris id iaculis. Duis blandit at sapien ac viverra. Proin ac erat a mauris dignissim semper quis vel libero. In id massa id nibh malesuada ornare non volutpat risus. Pellentesque sem nibh, vehicula a dolor quis, volutpat sagittis magna. Mauris ipsum arcu, tempus vel sollicitudin ac, consectetur sed magna. Praesent tempor varius justo vitae convallis. Nam pharetra, lacus quis ultrices vehicula, risus arcu porta libero, ac pretium ex elit in nisl. Integer urna ante, hendrerit sollicitudin convallis et, finibus nec odio.'
+      ],
+      [
+        'p',
+        null,
+        'Morbi viverra lacus tortor, eu consectetur ante tempor quis. Fusce eu eros et nisi volutpat efficitur. Proin euismod id eros ut eleifend. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sed fermentum libero, ultrices commodo mi. Praesent auctor quis purus ut tristique. Mauris quis nunc nec augue congue dignissim eu et neque. Suspendisse potenti. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.'
+      ],
+      [ 'pre', null, [ 'code', null, 'code block' ] ]
+    ],
+    diagnostics: [],
+    calls: []
+  },
+  expected: {
+    status: 'return',
+    value: [
+      [ 'h1', null, 'Lorem Ipsum' ],
+      [
+        'p',
+        null,
+        [
+          [ 'code', null, 'Lorem ipsum dolor' ],
+          ' sit amet, ',
+          [ 'a', [Object], 'consectetur' ],
+          ' ',
+          [ 'strong', null, 'adipiscing' ],
+          ' elit. ',
+          'P',
+          'ellentesque at urna diam. ',
+          'U',
+          't vulputate ornare egestas. ',
+          'V',
+          'ivamus fringilla molestie aliquam. ',
+          'P',
+          'ellentesque elit dui, mollis nec augue vitae, lacinia iaculis dolor. ',
+          'C',
+          'urabitur placerat tortor ut mauris consequat rhoncus. ',
+          'S',
+          'ed nec nibh et diam dictum blandit. ',
+          'M',
+          'orbi quis finibus nulla. ',
+          'S',
+          'uspendisse sit amet tincidunt nisi. ',
+          'M',
+          'orbi lacinia molestie purus eget dignissim. ',
+          'M',
+          'aecenas pharetra elit tellus, ac congue dui finibus sit amet. ',
+          'V',
+          'ivamus tempus at mauris vitae euismod. ',
+          'C',
+          'ras lacus nulla, fermentum at varius vitae, varius ac elit. ',
+          'N',
+          'ulla sit amet nibh in augue feugiat ultricies. ',
+          'P',
+          'raesent eget mi imperdiet, dapibus augue sed, porttitor nulla. ',
+          'N',
+          'unc sed sodales ex. ',
+          'N',
+          'ullam ut magna eget lectus luctus dapibus.'
+        ]
+      ],
+      [
+        'p',
+        null,
+        [
+          'I',
+          'nteger odio augue, rhoncus non velit ac, ultricies ornare libero. ',
+          'V',
+          'ivamus fermentum lectus nec diam accumsan, in sodales leo pulvinar. ',
+          'Q',
+          'uisque eu sapien mauris. ',
+          'I',
+          'nteger sagittis cursus massa id eleifend. ',
+          'V',
+          'estibulum dignissim eleifend felis, in laoreet neque egestas at. ',
+          'E',
+          'tiam elementum vel mauris id iaculis. ',
+          'D',
+          'uis blandit at sapien ac viverra. ',
+          'P',
+          'roin ac erat a mauris dignissim semper quis vel libero. ',
+          'I',
+          'n id massa id nibh malesuada ornare non volutpat risus. ',
+          'P',
+          'ellentesque sem nibh, vehicula a dolor quis, volutpat sagittis magna. ',
+          'M',
+          'auris ipsum arcu, tempus vel sollicitudin ac, consectetur sed magna. ',
+          'P',
+          'raesent tempor varius justo vitae convallis. ',
+          'N',
+          'am pharetra, lacus quis ultrices vehicula, risus arcu porta libero, ac pretium ex elit in nisl. ',
+          'I',
+          'nteger urna ante, hendrerit sollicitudin convallis et, finibus nec odio.'
+        ]
+      ],
+      [
+        'p',
+        null,
+        [
+          'M',
+          'orbi viverra lacus tortor, eu consectetur ante tempor quis. ',
+          'F',
+          'usce eu eros et nisi volutpat efficitur. ',
+          'P',
+          'roin euismod id eros ut eleifend. ',
+          'L',
+          'orem ipsum dolor sit amet, consectetur adipiscing elit. ',
+          'S',
+          'ed sed fermentum libero, ultrices commodo mi. ',
+          'P',
+          'raesent auctor quis purus ut tristique. ',
+          'M',
+          'auris quis nunc nec augue congue dignissim eu et neque. ',
+          'S',
+          'uspendisse potenti. ',
+          'C',
+          'lass aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.'
+        ]
+      ],
+      [ 'pre', null, [ 'code', null, 'code block' ] ]
+    ],
+    diagnostics: [],
+    calls: []
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.12.1
+
+exit_code: 1; signal: null

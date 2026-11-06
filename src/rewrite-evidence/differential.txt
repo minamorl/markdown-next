@@ -1,0 +1,4 @@
+command: ["node","src/rewrite-evidence/differential.cjs"]
+{ comparisons: 10030, failures: 0 }
+
+exit_code: 0; signal: null

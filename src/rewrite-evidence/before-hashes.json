@@ -1,0 +1,11 @@
+{
+  "src/parser.ts": "6c629e0a233c89089fcfba82523c0b6af1e53e25821974d554a1a8d3b913ad10",
+  "test/test-parser.ts": "96df269d378f9f14579a32481fd8335ca22f0d0a28be5ffa9357e4e342361d06",
+  "test/characterization/corpus.json": "6f80ae87cae667c5196406ad026b68c63ea2258301923abd28418a4c5ed110e5",
+  "test/characterization/golden.json": "236594eed613edf8a4fcad4d16ea17a84b6fa74dafa7853e81f9a3714219a495",
+  "pnpm-lock.yaml": "93d43df91479f9f15272fd4bd4ed95eabfbf03865950619050dcf795e25059fb",
+  "bench/run.cjs": "2b7397c578d3d9c1e7396926617acf878cf72873a97eaad4f2bb163e29e0cc15",
+  "bench/worker.cjs": "bba37fd4945439d313d186fa9083dfa0805611f553cf55a32493f9c00cff0508",
+  "bench/stats.cjs": "0db1d57cde37d95bd3e99d40e62938eb5863457b4a62811b1b8b6f78550afeaa",
+  "bench/checkpoint.cjs": "6605c9fa771e0318049f29cc72ae71ff7dc35c19fc4e4ccc8f8d9a2203043cd4"
+}

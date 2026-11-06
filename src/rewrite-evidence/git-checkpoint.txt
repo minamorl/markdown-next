@@ -1,0 +1,4 @@
+command: git add docs/rewrite.md
+exit_code: 128
+fatal: Unable to create '/home/minamorl/repos/markdown-next/.git/worktrees/rewrite/index.lock': Read-only file system
+Fallback: local Git bundle with phase commits; original Git metadata remains read-only.

@@ -1,0 +1,1 @@
+command: ["node","src/rewrite-evidence/checkpoint.cjs","refactor: replace Parsimmon grammar with cursor scanner"]
