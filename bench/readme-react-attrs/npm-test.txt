@@ -1,0 +1,232 @@
+command: npm test
+
+> @minamorl/markdown-next@2.3.0 test
+> pnpm run build && mocha lib/test && node --test test/readme.test.cjs test/security.test.cjs
+
+
+
+  parser
+    ✔ should parse h1
+    ✔ should parse h2
+    ✔ should parse h3
+    ✔ should parse h4
+    ✔ should parse h5
+    ✔ should parse h6
+    ✔ should parse single line as a paragraph
+    ✔ should parse a paragraph
+    ✔ should parse a paragraph
+    ✔ should parse strong text inside a paragraph
+    ✔ should parse strong text a single phrase
+    ✔ should parse em text a single phrase
+    ✔ should parse complex text
+    ✔ should parse ul
+    ✔ should parse ol
+    ✔ should parse anchor
+    ✔ should parse code block
+    ✔ should parse code block with a language type
+    ✔ should parse code inline
+    ✔ should parse blockquote
+    ✔ should parse nested blockquote
+    ✔ should parse nested blockquote
+    ✔ should parse multiple blockquotes
+    ✔ should parse mixed text
+    ✔ should parse nested lists
+    ✔ should parse nested lists
+    ✔ should parse nested lists (complex one)
+    ✔ should parse unindentation in list correctly
+    ✔ should parse nested lists (separated)
+    ✔ should parse broken nested lists
+    ✔ should parse a list after broken nested lists
+    ✔ should parse another form of headers
+    ✔ should parse img
+    ✔ should parse table
+    ✔ should parse extension syntax
+    ✔ should parse inline extension syntax
+    courner cases
+      ✔ can parse mixes of blockquote and list
+      ✔ should parse h1 after paragraph
+      ✔ should parse as a paragraph contains special characters
+      ✔ should parse list first
+      ✔ should parser h1/h2 eager
+      ✔ can parse a paragraph which begins with "#"
+      ✔ can parse a paragraph which begins with "-"
+      ✔ can parse a paragraph which begins with "["
+      ✔ can parse a paragraph which begins with "*"
+      ✔ can parse a paragraph which begins with "="
+      ✔ can parse a paragraph which begins with "0."
+      ✔ can parse a paragraph which begins with "]"
+      ✔ can parse a paragraph which begins with "`"
+      ✔ can parse a paragraph and a code block sepalatery
+      ✔ can parse incorrect code block as paragraph
+      ✔ can parse inline code contains underscore
+      ✔ can parse inline code contains backtick via double-backtick delimiters
+      ✔ can parse inline code contains backtick run
+      ✔ can parse inline code contains backtick run longer than delimiter
+      ✔ can parse inline code contains longer backtick run without padding
+      ✔ keeps unpaired double backticks literal
+      ✔ can parse code block containing a triple-backtick fence
+      ✔ can close a code block with a longer fence
+      ✔ keeps paragraph intact when a following fence never closes
+      ✔ can parse table cell with double-backtick code span
+    AST
+      ✔ can output paragraph
+      ✔ can output list
+      ✔ should treat continuous input as single string
+      ✔ should treat nested structures
+      ✔ should output table with flat tr children (not nested)
+    Extention
+      ✔ can be extended by user
+    Math (MathJax auto-detection)
+      ✔ should output raw inline math with $...$
+      ✔ should output raw block math with $$...$$
+      ✔ should preserve inline math with LaTeX commands
+      ✔ should preserve block math with multiple lines
+      ✔ should parse mixed content with inline and block math
+      ✔ should not confuse single $ with math
+      ✔ should handle math in table cells
+      ✔ should handle math in blockquote
+    Edge Cases
+      Empty and whitespace inputs
+        ✔ should handle empty string
+        ✔ should handle whitespace-only string
+        ✔ should handle newline-only string
+        ✔ should handle tabs and spaces
+      XSS and security
+        ✔ should handle quotes in anchor href
+        ✔ should handle quotes in image src
+        ✔ should handle special characters in link text
+      Unicode and special characters
+        ✔ should parse emoji in paragraph
+        ✔ should parse unicode characters
+        ✔ should parse right-to-left text
+      Japanese-style first-line indentation (U+3000)
+        ✔ should preserve a single full-width space at paragraph start
+        ✔ should preserve multiple full-width spaces at paragraph start
+        ✔ should preserve full-width indentation after a heading
+        ✔ should preserve full-width indentation after a blank line
+        ✔ should preserve full-width indentation before inline strong
+        ✔ should preserve full-width indentation in AST output
+        ✔ should still strip half-width leading spaces (legacy behavior)
+      Empty elements
+        ✔ should handle empty strong tags
+        ✔ should handle empty em tags
+        ✔ should handle empty code tags
+        ✔ should handle empty anchor
+        ✔ should handle empty image
+        ✔ should handle empty list items
+        ✔ should handle empty blockquote
+      Unclosed tags
+        ✔ should handle unclosed strong tag
+        ✔ should handle unclosed em tag
+        ✔ should handle unclosed code tag
+        ✔ should handle unclosed anchor
+      Line ending variations
+        ✔ should handle CRLF line endings
+        ✔ should handle CR line endings
+        ✔ should handle mixed line endings
+      Nested structures depth
+        ✔ should handle deeply nested lists
+        ✔ should handle deeply nested blockquotes
+      List indentation edge cases
+        ✔ should handle single space indentation
+        ✔ should handle three space indentation
+        ✔ should handle tab indentation
+      Code block edge cases
+        ✔ should handle code block with backticks inside
+        ✔ should handle empty code block
+        ✔ should handle code block with only newlines
+        ✔ should parse code block followed by text
+        ✔ should parse multi-line code block followed by text
+        ✔ should parse code block in typical LLM output pattern
+        ✔ should parse code block followed immediately by text (no blank line)
+        ✔ should parse multiple code blocks
+      Table edge cases
+        ✔ should handle table with empty cells
+        ✔ should handle table with different column counts
+      Table comprehensive tests
+        ✔ should parse basic table with spaces
+        ✔ should parse table without leading/trailing spaces
+        ✔ should parse table with mixed spacing
+        ✔ should parse single column table
+        ✔ should parse two column table
+        ✔ should parse table with multiple body rows
+        ✔ should treat escaped pipe as cell content
+        ✔ should treat escaped pipe as content even inside code span (GFM)
+        ✔ should combine escaped pipes with double-backtick code spans
+        ✔ should preserve combined escaped pipes and backtick runs in AST output
+        ✔ should split cell at unescaped pipe even inside code span (GFM)
+        ✔ should parse table with left alignment
+        ✔ should parse table with center alignment
+        ✔ should parse table with right alignment
+        ✔ should parse table with mixed alignment
+        ✔ should parse table with bold in cells
+        ✔ should parse table with italic in cells
+        ✔ should parse table with code in cells
+        ✔ should parse table with links in cells
+        ✔ should parse table at end of file without trailing newline
+        ✔ should parse table with trailing newline
+        ✔ should parse table followed by paragraph
+        ✔ should parse table with Japanese text
+        ✔ should parse table with emoji
+        ✔ should parse table with all empty cells
+        ✔ should handle cells with only whitespace
+        ✔ should parse table with long separator
+        ✔ should parse table with minimal separator
+        ✔ should parse table with numeric content
+        ✔ should parse paragraph followed by table
+        ✔ should parse table with complex header content
+      Special character combinations
+        ✔ should handle multiple asterisks
+        ✔ should handle mixed emphasis markers
+        ✔ should handle multiple hashes without space
+      Very long inputs
+        ✔ should handle very long paragraph
+        ✔ should handle many list items
+      Special parsing scenarios
+        ✔ should handle header followed by list without blank line
+        ✔ should handle multiple consecutive blank lines
+        ✔ should handle trailing whitespace
+        ✔ should handle leading whitespace in code block
+      Random string robustness
+        ✔ should parse random alphanumeric strings without crashing
+        ✔ should parse random special characters without crashing
+        ✔ should parse mixed random content without crashing
+        ✔ should parse unicode mixed with markdown without crashing
+        ✔ should handle strings with only special markdown characters
+        ✔ should handle malformed markdown gracefully
+    GFM Footnotes
+      ✔ should parse inline footnote reference
+      ✔ should parse footnote definition
+      ✔ should parse footnote reference and definition together
+      ✔ should parse multiple footnotes
+      ✔ should parse multiline footnote with indentation
+      ✔ should parse multiline footnote with tab indentation
+      ✔ should sort footnotes by number
+      ✔ should not confuse [^n]: definition with [^n] reference
+      ✔ should handle footnote in paragraph context
+      ✔ should output footnotes in AST format
+      ✔ should handle footnote with special characters in content
+
+
+  178 passing (40ms)
+
+✔ every README code example typechecks as a consumer and matches its frozen output (2667.393675ms)
+✔ README React renderer renders HTML attributes through react-dom/server without warnings (2674.790274ms)
+✔ Markdown code spans and fences encode literal HTML text (2.773184ms)
+✔ AST code text and custom exporters retain unescaped source (1.06507ms)
+✔ raw HTML passthrough is intentional, including raw HTML code elements (0.677448ms)
+✔ HTML attributes retain order, decoded values and exporter access (0.807123ms)
+✔ attribute decoding follows HTML named and numeric reference rules without double escaping (1.178634ms)
+✔ nested, boolean, duplicate, numeric and special attribute names are retained safely (0.552142ms)
+✔ unterminated quotes never consume a later unrelated closing tag as an attribute (0.164721ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5582.023411
+$ tsc
+
+exit_code: 0; signal: null

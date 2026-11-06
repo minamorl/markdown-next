@@ -1,0 +1,14 @@
+command: npm run lint
+
+> @minamorl/markdown-next@2.3.0 lint
+> eslint src test
+
+
+/home/minamorl/repos/.worktrees/markdown-next/readme-react-attrs/test/test-parser.ts
+  299:23  warning  'str' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+  577:70  warning  'join' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (0 errors, 2 warnings)
+
+
+exit_code: 0; signal: null

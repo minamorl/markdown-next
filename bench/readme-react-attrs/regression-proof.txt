@@ -1,0 +1,5 @@
+command: node bench/readme-react-attrs/regression-proof.cjs
+Before (README at 1e49aa9): The `style` prop expects a mapping from style properties to values, not a string. For example, style={{marginRight: spacing + 'em'}} when using JSX.
+After (current README, consumer typechecked): <p><span style="color:red">red</span></p>
+
+exit_code: 0; signal: null

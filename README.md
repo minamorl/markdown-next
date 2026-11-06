@@ -49,13 +49,85 @@ Elements use `[tagName, attributes, children]`. Text is a string, empty children
 
 ### Rendering AST in React
 
-Here's a minimal renderer:
+HTML attributes need conversion to React props, including a style object and boolean values. This renderer drops event attributes; it is not a sanitizer, so sanitize untrusted input before parsing (including URLs and CSS).
 
 ```tsx
 import * as React from 'react'
 import { Parser, asAST, type ASTNode } from '@minamorl/markdown-next'
 
 type ElementNode = [string, Record<string, unknown> | null, ASTNode]
+
+const propNames: Record<string, string> = {
+  ...Object.fromEntries(
+    `acceptCharset accessKey allowFullScreen autoCapitalize autoComplete autoFocus autoPlay
+   cellPadding cellSpacing charSet classID colSpan contentEditable contextMenu crossOrigin
+   dateTime disablePictureInPicture disableRemotePlayback encType enterKeyHint fetchPriority
+   formAction formEncType formMethod formNoValidate formTarget frameBorder hrefLang httpEquiv
+   inputMode isMap itemID itemProp itemRef itemScope itemType keyParams keyType marginHeight marginWidth
+   maxLength mediaGroup minLength noModule noValidate playsInline radioGroup readOnly referrerPolicy
+   rowSpan spellCheck srcDoc srcLang srcSet tabIndex useMap`.split(/\s+/)
+    .map(name => [name.toLowerCase(), name])
+  ),
+  class: 'className', for: 'htmlFor', 'accept-charset': 'acceptCharset', 'http-equiv': 'httpEquiv'
+}
+const booleanAttrs = new Set(`allowfullscreen async autofocus autoplay checked controls default defer
+  disabled disablepictureinpicture disableremoteplayback formnovalidate hidden inert ismap itemscope
+  loop multiple muted nomodule novalidate open playsinline readonly required reversed scoped seamless selected`.split(/\s+/))
+const voidTags = new Set('area base br col embed hr img input link meta param source track wbr'.split(' '))
+
+function reactStyle(css: string): Record<string, string> {
+  const style: Record<string, string> = Object.create(null)
+  let declaration = '', quote = '', depth = 0
+  for (let i = 0; i <= css.length; i++) {
+    const char = css[i] ?? ';'
+    if (char === '\\' && i < css.length) { declaration += char + (css[++i] ?? ''); continue }
+    if (quote) {
+      if (char === quote) quote = ''
+    } else if (char === '/' && css[i + 1] === '*') {
+      const end = css.indexOf('*/', i + 2)
+      i = end < 0 ? css.length : end + 1
+      continue
+    } else if (char === '"' || char === "'") quote = char
+    else if (char === '(') depth++
+    else if (char === ')') depth--
+    else if (char === ';' && depth === 0) {
+      const colon = declaration.indexOf(':')
+      if (colon > 0) {
+        const name = declaration.slice(0, colon).trim()
+        const property = name.startsWith('--') ? name : name.toLowerCase()
+          .replace(/^-ms-/, 'ms-').replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
+        const value = declaration.slice(colon + 1).trim()
+        if (property && value) style[property] = value
+      }
+      declaration = ''
+      continue
+    }
+    declaration += char
+  }
+  return style
+}
+
+function toReactProps(attrs: ElementNode[1], tag: string): Record<string, unknown> {
+  const props: Record<string, unknown> = Object.create(null)
+  for (const [name, value] of Object.entries(attrs ?? {})) {
+    const lower = name.toLowerCase()
+    // HTML cannot supply React internals or event callbacks.
+    if (/^on/.test(lower) || ['key', 'ref', 'children', 'dangerouslysetinnerhtml'].includes(lower)) continue
+    if (lower === 'style') {
+      props.style = typeof value === 'string' ? reactStyle(value) : value
+      continue
+    }
+    const prop = Object.prototype.hasOwnProperty.call(propNames, lower) ? propNames[lower] : lower
+    // Static HTML form values become uncontrolled React defaults.
+    const target = tag === 'input' && lower === 'checked' ? 'defaultChecked'
+      : tag === 'input' && lower === 'value' ? 'defaultValue' : prop
+    props[target] = booleanAttrs.has(lower) ? value !== false && value != null
+      : (lower === 'download' || lower === 'capture') && value === '' ? true
+      : ['contenteditable', 'draggable', 'spellcheck'].includes(lower) && value === 'false' ? false
+      : ['contenteditable', 'draggable', 'spellcheck'].includes(lower) && value === 'true' ? true : value
+  }
+  return props
+}
 
 function isElementNode(node: ASTNode): node is ElementNode {
   return Array.isArray(node) && node.length === 3 && typeof node[0] === 'string'
@@ -68,10 +140,11 @@ function renderNode(node: ASTNode, key: number = 0): React.ReactNode {
   if (!isElementNode(node)) return node.map((child, i) => renderNode(child, i))
 
   const [tag, attrs, children] = node
-  if (tag === 'img' || tag === 'br' || tag === 'hr') {
-    return React.createElement(tag, { ...attrs, key })
+  const props = { ...toReactProps(attrs, tag), key }
+  if (voidTags.has(tag)) {
+    return React.createElement(tag, props)
   }
-  return React.createElement(tag, { ...attrs, key }, renderNode(children))
+  return React.createElement(tag, props, renderNode(children))
 }
 
 const parser = new Parser({ export: asAST })

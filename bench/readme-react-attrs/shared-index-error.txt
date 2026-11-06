@@ -1,0 +1,1 @@
+fatal: Unable to create '/home/minamorl/repos/markdown-next/.git/worktrees/readme-react-attrs/index.lock': 読み込み専用ファイルシステムです
