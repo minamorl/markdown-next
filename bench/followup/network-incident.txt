@@ -1,0 +1,5 @@
+Command: env npm_config_cache="$TMPDIR/npm-rewrite-cache" npm pack --dry-run --ignore-scripts --json
+Observed npm update notification request (raw debug log line):
+13 http fetch GET 200 https://registry.npmjs.org/npm 156ms
+This violates the inherited no-external-network constraint. The observed request retrieves npm version metadata; no publish or upload command was run.
+Mitigation: all subsequent recorder commands force npm_config_update_notifier=false and npm_config_offline=true. Dependency installs already used pnpm --offline. This run must not be described as network-free.

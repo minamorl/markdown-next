@@ -1,5 +1,5 @@
 command: ["npm","test"]
-environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":"false"}
+environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":"false","npm_config_update_notifier":"false","npm_config_offline":"true","npm_config_cache":"/home/minamorl/.cc/tmp/fIlqD89W/npm-followup-cache"}
 
 > @minamorl/markdown-next@2.2.4 test
 > pnpm run build && mocha lib/test && node --test test/readme.test.cjs test/security.test.cjs
@@ -212,10 +212,10 @@ $ tsc
 
   178 passing (54ms)
 
-✔ every README code example typechecks as a consumer and matches its frozen output (3609.01006ms)
-✔ Markdown code spans and fences encode literal HTML text (5.081741ms)
-✔ AST code text and custom exporters retain unescaped source (3.338842ms)
-✔ raw HTML passthrough is intentional, including raw HTML code elements (0.835246ms)
+✔ every README code example typechecks as a consumer and matches its frozen output (3583.800915ms)
+✔ Markdown code spans and fences encode literal HTML text (4.774881ms)
+✔ AST code text and custom exporters retain unescaped source (3.387383ms)
+✔ raw HTML passthrough is intentional, including raw HTML code elements (0.549988ms)
 ℹ tests 4
 ℹ suites 0
 ℹ pass 4
@@ -223,6 +223,6 @@ $ tsc
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 3948.674026
+ℹ duration_ms 3880.313125
 
 exit_code: 0; signal: null

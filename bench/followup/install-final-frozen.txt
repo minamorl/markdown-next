@@ -1,15 +1,6 @@
 command: ["pnpm","install","--offline","--frozen-lockfile","--frozen-store","--ignore-scripts","--trust-lockfile"]
-environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":"false"}
-Lockfile is up to date, resolution step is skipped
-Progress: resolved 1, reused 0, downloaded 0, added 0
-Packages: +3
-+++
-Progress: resolved 3, reused 3, downloaded 0, added 3, done
-
-devDependencies:
-+ @types/react 19.2.14
-+ react 19.2.4
-
-Done in 650ms using pnpm v11.18.0
+environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":"","npm_config_update_notifier":"false","npm_config_offline":"true","npm_config_cache":"/home/minamorl/.cc/tmp/fIlqD89W/npm-followup-cache"}
+Already up to date
+Done in 502ms using pnpm v11.18.0
 
 exit_code: 0; signal: null

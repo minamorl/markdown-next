@@ -5,15 +5,23 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const Module = require('node:module');
-const { execFileSync } = require('node:child_process');
+const { createHash } = require('node:crypto');
 const ts = require('typescript');
 const { isDeepStrictEqual } = require('node:util');
 const root = path.resolve(__dirname, '../..');
-const original = file => execFileSync('git', ['show', 'eb825d9:' + file], { cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
-const oldGolden = JSON.parse(original('test/characterization/golden.json'));
-const corpus = JSON.parse(original('test/characterization/corpus.json'));
-assert.equal(fs.readFileSync(path.join(root, 'test/characterization/corpus.json'), 'utf8'), original('test/characterization/corpus.json'));
-let source = original('src/parser.ts');
+const provenance = require('./accepted-reference.json');
+const hash = data => createHash('sha256').update(data).digest('hex');
+// A compact, hash-pinned reference keeps this gate independent of Git history
+// (including shallow CI checkouts). Reconstruct the original golden by
+// reverting exactly the one permitted HTML field, then verify its full hash.
+const oldGolden = JSON.parse(fs.readFileSync(path.join(root, 'test/characterization/golden.json'), 'utf8'));
+oldGolden.entries.find(row => row.id === provenance.permittedId).html.value = provenance.previousHtml;
+assert.equal(hash(JSON.stringify(oldGolden, null, 2) + '\n'), provenance.goldenSha256);
+const corpusBytes = fs.readFileSync(path.join(root, 'test/characterization/corpus.json'));
+assert.equal(hash(corpusBytes), provenance.corpusSha256);
+const corpus = JSON.parse(corpusBytes);
+let source = fs.readFileSync(path.join(__dirname, 'accepted-scanner.ts.txt'), 'utf8');
+assert.equal(hash(source), provenance.parserSha256);
 for (const site of ["this.node('code', this.input.slice(a, b))", "this.node('code', this.join(code))"]) {
   assert.equal(source.split(site).length, 2, 'Exactly one original Markdown code production per site');
   source = source.replace(site, site.replace("'code'", "'markdown-code-reference'"));

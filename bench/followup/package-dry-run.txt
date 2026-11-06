@@ -1,0 +1,50 @@
+command: ["env","npm_config_cache=/home/minamorl/.cc/tmp/fIlqD89W/npm-rewrite-cache","npm","pack","--dry-run","--ignore-scripts","--json"]
+environment: {"NODE_OPTIONS":"","pnpm_config_verify_deps_before_run":""}
+[
+  {
+    "id": "@minamorl/markdown-next@2.2.4",
+    "name": "@minamorl/markdown-next",
+    "version": "2.2.4",
+    "size": 12317,
+    "unpackedSize": 47475,
+    "shasum": "ac12b7e8483dec19f2afb4c5a82d6da77006c15f",
+    "integrity": "sha512-uZRvPrGxdeVydkKseREXfMVSbHDlMn42gDaK5MMR4UBasyvXEqDcvdokD94LZOqhQiJJTauhGWHkvVHaaORk3g==",
+    "filename": "minamorl-markdown-next-2.2.4.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 1065,
+        "mode": 384
+      },
+      {
+        "path": "README.md",
+        "size": 6454,
+        "mode": 384
+      },
+      {
+        "path": "lib/src/parser.d.ts",
+        "size": 1567,
+        "mode": 384
+      },
+      {
+        "path": "lib/src/parser.js",
+        "size": 36446,
+        "mode": 384
+      },
+      {
+        "path": "package.json",
+        "size": 1943,
+        "mode": 384
+      }
+    ],
+    "entryCount": 5,
+    "bundled": []
+  }
+]
+npm notice
+npm notice New major version of npm available! 11.20.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+
+exit_code: 0; signal: null
