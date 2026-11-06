@@ -1,7 +1,7 @@
 [
   {
     "language": "bash",
-    "command": "npm install @rainpulse/markdown-next",
+    "command": "npm install @minamorl/markdown-next",
     "output": []
   },
   {

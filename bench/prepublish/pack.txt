@@ -1,8 +1,9 @@
+annotation: Package scope labels normalized to @minamorl/markdown-next after capture. Historical measurements, artifact filenames and digests are unchanged; this is not a fresh execution.
 command: ["npm","pack","--dry-run"]
 environment: {"pnpm_config_verify_deps_before_run":"false"}
 rainpulse-markdown-next-2.3.0.tgz
 npm notice
-npm notice 📦  @rainpulse/markdown-next@2.3.0
+npm notice 📦  @minamorl/markdown-next@2.3.0
 npm notice Tarball Contents
 npm notice 1.1kB LICENSE
 npm notice 7.0kB README.md
@@ -12,7 +13,7 @@ npm notice 1.6kB lib/src/parser.d.ts
 npm notice 41.1kB lib/src/parser.js
 npm notice 2.0kB package.json
 npm notice Tarball Details
-npm notice name: @rainpulse/markdown-next
+npm notice name: @minamorl/markdown-next
 npm notice version: 2.3.0
 npm notice filename: rainpulse-markdown-next-2.3.0.tgz
 npm notice package size: 27.0 kB

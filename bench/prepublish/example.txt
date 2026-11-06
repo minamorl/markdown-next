@@ -1,6 +1,7 @@
+annotation: Package scope labels normalized to @minamorl/markdown-next after capture. Historical measurements, artifact filenames and digests are unchanged; this is not a fresh execution.
 command: ["npm","run","example"]
 
-> @rainpulse/markdown-next@2.3.0 example
+> @minamorl/markdown-next@2.3.0 example
 > cd examples && webpack
 
 asset ./bundle.js 115 KiB [compared for emit] (name: main)

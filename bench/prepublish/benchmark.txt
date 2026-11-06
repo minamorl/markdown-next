@@ -1,11 +1,12 @@
+annotation: Package scope labels normalized to @minamorl/markdown-next after capture. Historical measurements, artifact filenames and digests are unchanged; this is not a fresh execution.
 command: ["npm","run","bench","--","--output=bench/prepublish/benchmark.json"]
 environment: {"pnpm_config_verify_deps_before_run":""}
 
-> @rainpulse/markdown-next@2.3.0 bench
+> @minamorl/markdown-next@2.3.0 bench
 > npm run build && node bench/run.cjs --output=bench/prepublish/benchmark.json
 
 
-> @rainpulse/markdown-next@2.3.0 build
+> @minamorl/markdown-next@2.3.0 build
 > tsc
 
 Measured 25/287 inputs (HTML + AST).

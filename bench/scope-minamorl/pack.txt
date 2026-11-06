@@ -1,0 +1,25 @@
+command: ["npm", "pack", "--dry-run"]
+environment: pnpm_config_verify_deps_before_run=false
+minamorl-markdown-next-2.3.0.tgz
+npm notice
+npm notice 📦  @minamorl/markdown-next@2.3.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 7.0kB README.md
+npm notice 59B lib/src/html-entities.d.ts
+npm notice 58.3kB lib/src/html-entities.js
+npm notice 1.6kB lib/src/parser.d.ts
+npm notice 41.1kB lib/src/parser.js
+npm notice 2.1kB package.json
+npm notice Tarball Details
+npm notice name: @minamorl/markdown-next
+npm notice version: 2.3.0
+npm notice filename: minamorl-markdown-next-2.3.0.tgz
+npm notice package size: 27.0 kB
+npm notice unpacked size: 111.2 kB
+npm notice shasum: 1bd7cab812116b5f2cf5f1c5a2be81646c65ea5e
+npm notice integrity: sha512-fxIKkPeEPFeqw[...]5E+Nxb/v70qvQ==
+npm notice total files: 7
+npm notice
+
+exit_code: 0

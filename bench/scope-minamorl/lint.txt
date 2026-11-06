@@ -1,0 +1,15 @@
+command: ["npm", "run", "lint"]
+environment: pnpm_config_verify_deps_before_run=false
+
+> @minamorl/markdown-next@2.3.0 lint
+> eslint src test
+
+
+/home/minamorl/repos/.worktrees/markdown-next/scope-minamorl/test/test-parser.ts
+  299:23  warning  'str' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+  577:70  warning  'join' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (0 errors, 2 warnings)
+
+
+exit_code: 0

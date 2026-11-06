@@ -1,0 +1,19 @@
+package: @minamorl/markdown-next@2.3.0
+publishConfig: {"registry": "https://registry.npmjs.org/", "access": "public"}
+remaining old scope matches: []
+updated hash keys: ["README.md", "package.json"]
+d0109308114d84c33be844a1d93ba064c722f0c31259241ecb6beefd6ce88ad6  bench/followup/measurement-input-hashes.json (unchanged from HEAD)
+282c4d651ae0011a30a6a484fc6591d5b66aca0f8805e19a144fad59328eef20  bench/prepublish/benchmark.json (unchanged from HEAD)
+5b3b4477d6b254bd7237d81023ca98d73f7d658f2b4596ed6dc840481233ae8a  bench/prepublish/benchmark.json.journal.jsonl (unchanged from HEAD)
+9dbdfd37efda7bdbec22a3bde279d7e946080d1f7d0d1e53d497b5d3daf99aa6  bench/results/baseline.json (unchanged from HEAD)
+820a8ef27ad3848f77da4da341fd70dfd4121c13cf99251c643f10865d325cb8  bench/results/baseline.json.journal.jsonl (unchanged from HEAD)
+ea75fa0e4b44012d7c98ba249cf62d0b52a441b5e291288ecc96c0d4cfd85c67  bench/results/resume-smoke.json.journal.jsonl (unchanged from HEAD)
+4be030c2b802ad352b824307c5809ea96986af6aac326e473b99421811186a76  bench/results/rewrite-initial/benchmark.json (unchanged from HEAD)
+5c79d2f98fc83e68c4f4002a8483fa2551acf87e3307a7b6186a834fc4d9958a  bench/results/rewrite-initial/benchmark.json.journal.jsonl (unchanged from HEAD)
+3d9a85b7f3b35ab00a23a2dea54b21985959ba750ff5d927d36d608569abe7ee  bench/results/rewrite-secure.json (unchanged from HEAD)
+d8d5679208c6e249c5c841fa8a12d993c33933cc9aa9669c34af7ec0d985c928  bench/results/rewrite-secure.json.journal.jsonl (unchanged from HEAD)
+1d5591b7f55ed05727094808e3eb265808e399917f904b379a89af14c4d49609  bench/results/smoke.json.journal.jsonl (unchanged from HEAD)
+ecee5e9c3c1bcc5d80cb48564bbeb645b8d45335606acc5f16b9381959145b93  pnpm-lock.yaml (unchanged from HEAD)
+f40e6dd4fc9aafa860490a4a856ec42ec153cbb8b7f2ed19417e42c6d7f56694  src/html-entities.ts (unchanged from HEAD)
+9bcad9fba3db5b5fec2b2beb460585524c9a047c9d6bd391d1b7c6498a0abbb9  src/parser.ts (unchanged from HEAD)
+exit_code: 0
