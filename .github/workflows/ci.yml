@@ -5,6 +5,15 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # Never cancel a run on main: it may be in the middle of npm publish.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   test:
@@ -33,3 +42,84 @@ jobs:
 
     - name: Run tests
       run: pnpm test
+
+  # main is the latest release: when the version in package.json is not on
+  # npm yet, publish it and tag the commit as v<version>.
+  publish:
+    name: Publish to npm
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # GitHub release and tag
+      id-token: write # npm provenance and trusted publishing
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: Use Node.js 26.12.1
+      uses: actions/setup-node@v4
+      with:
+        node-version: '26.12.1'
+        registry-url: https://registry.npmjs.org
+        cache: 'pnpm'
+
+    - name: Compare package.json with npm
+      id: release
+      run: |
+        name="$(node -p 'require("./package.json").name')"
+        version="$(node -p 'require("./package.json").version')"
+        published="$(npm view "$name@$version" version --registry=https://registry.npmjs.org/ 2>/dev/null || true)"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        if [[ "$published" == "$version" ]]; then
+          echo "publish=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::$name@$version is already on npm."
+        else
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Install locked dependencies
+      if: steps.release.outputs.publish == 'true'
+      run: pnpm install --frozen-lockfile
+
+    - name: Build
+      if: steps.release.outputs.publish == 'true'
+      run: pnpm run build
+
+    - name: Check the tarball contents
+      if: steps.release.outputs.publish == 'true'
+      run: |
+        npm pack --dry-run --json > "$RUNNER_TEMP/pack.json"
+        node -e '
+          const files = require(process.argv[1])[0].files.map((f) => f.path);
+          const need = ["lib/src/parser.js", "lib/src/parser.d.ts", "LICENSE"];
+          const missing = need.filter((f) => !files.includes(f));
+          if (missing.length) { console.error("missing from tarball: " + missing.join(", ")); process.exit(1); }
+        ' "$RUNNER_TEMP/pack.json"
+
+    - name: Publish
+      if: steps.release.outputs.publish == 'true'
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: |
+        if [[ -z "$NODE_AUTH_TOKEN" ]]; then
+          echo "::warning::NPM_TOKEN is not set; relying on npm trusted publishing."
+        fi
+        npm publish --provenance --access public
+
+    - name: Create the GitHub release
+      if: steps.release.outputs.publish == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: v${{ steps.release.outputs.version }}
+      run: gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
