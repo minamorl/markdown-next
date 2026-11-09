@@ -15,6 +15,12 @@ const hash = data => createHash('sha256').update(data).digest('hex');
 // (including shallow CI checkouts). Reconstruct the original golden by
 // reverting exactly the one permitted HTML field, then verify its full hash.
 const oldGolden = JSON.parse(fs.readFileSync(path.join(root, 'test/characterization/golden.json'), 'utf8'));
+const pipeChanges = require('../prepublish/pipe-line-changes.json');
+for (const change of pipeChanges) {
+  const index = oldGolden.entries.findIndex(row => row.id === change.id);
+  assert.deepStrictEqual(oldGolden.entries[index], change.after);
+  oldGolden.entries[index] = change.before;
+}
 // Reverse the separately audited 2.3.0 attribute migration before checking this
 // historical code-escaping migration. Neither gate refreezes arbitrary output.
 const attributeChanges = require('../prepublish/attribute-changes.json');
@@ -60,12 +66,14 @@ for (const [i, fixture] of corpus.cases.entries()) {
   delete newRest.value;
   assert.deepStrictEqual(newRest, oldRest, fixture.id + ': only HTML value may change');
   const attributeChange = attributeChanges.find(row => row.id === fixture.id);
+  const pipeChange = pipeChanges.find(row => row.id === fixture.id);
   if (attributeChange) {
     assert.deepStrictEqual(permitted, attributeChange.before.html);
     assert.deepStrictEqual(before.ast, attributeChange.before.ast);
   }
-  assert.deepStrictEqual(actualRunner(fixture, 'html')().outcome, attributeChange ? attributeChange.after.html : permitted, fixture.id + '/html reviewed migrations');
-  assert.deepStrictEqual(actualRunner(fixture, 'ast')().outcome, attributeChange ? attributeChange.after.ast : before.ast, fixture.id + '/ast reviewed migrations');
+  const migration = pipeChange || attributeChange;
+  assert.deepStrictEqual(actualRunner(fixture, 'html')().outcome, migration ? migration.after.html : permitted, fixture.id + '/html reviewed migrations');
+  assert.deepStrictEqual(actualRunner(fixture, 'ast')().outcome, migration ? migration.after.ast : before.ast, fixture.id + '/ast reviewed migrations');
   if (!isDeepStrictEqual(permitted, before.html)) {
     updated.entries[i].html = permitted;
     changes.push({ id: fixture.id, input: fixture.input, before: before.html.value, after: permitted.value });
@@ -73,11 +81,12 @@ for (const [i, fixture] of corpus.cases.entries()) {
 }
 const file = path.join(root, 'test/characterization/golden.json');
 for (const change of attributeChanges) updated.entries[updated.entries.findIndex(row => row.id === change.id)] = change.after;
+for (const change of pipeChanges) updated.entries[updated.entries.findIndex(row => row.id === change.id)] = change.after;
 if (process.argv.includes('--write')) fs.writeFileSync(file, JSON.stringify(updated, null, 2) + '\n');
 assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')), updated, 'Golden must contain ONLY the permitted changes');
 const report = path.join(__dirname, 'golden-code-escaping.json');
 if (process.argv.includes('--write')) fs.writeFileSync(report, JSON.stringify(changes, null, 2) + '\n');
 else assert.deepStrictEqual(JSON.parse(fs.readFileSync(report, 'utf8')), changes);
 console.log('Changed HTML entries: ' + changes.map(row => row.id).join(', '));
-console.log('Historical code-escaping migration verified after reversing the separately audited attribute migration.');
-console.log('Only the listed code HTML and attribute HTML/AST entries change; plugin traces, diagnostics, statuses and corpus are unchanged.');
+console.log('Historical code-escaping migration verified after reversing the separately audited attribute and pipe-line migrations.');
+console.log('Only the listed code HTML, attribute HTML/AST and pipe-line HTML/AST entries change; plugin traces, diagnostics, statuses and corpus are unchanged.');

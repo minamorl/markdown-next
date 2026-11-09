@@ -609,11 +609,13 @@ class Scanner<T> {
       ranges.push(i, rowEnd)
       i = this.newline(rowEnd)
     }
-    this.p = i
+    // Without a valid separator row this is a text paragraph, not a table, so
+    // hand the whole run back to paragraph() instead of claiming a parse.
     if (!this.separator(sepStart, sepEnd)) {
-      this.value = { status: false, index: -1, value: null, furthest: 0, expected: ['Not a valid table separator'] }
-      return true
+      this.p = start
+      return false
     }
+    this.p = i
     const rows: any[] = [this.cells(start, headerEnd, 'th')]
     for (let j = 0; j < ranges.length; j += 2) rows.push(this.cells(ranges[j], ranges[j + 1], 'td'))
     this.value = this.node('table', this.join(rows))

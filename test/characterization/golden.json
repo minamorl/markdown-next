@@ -13646,22 +13646,34 @@
       "id": "table-invalid-separator",
       "html": {
         "status": "return",
-        "value": "[object Object]",
+        "value": "<p>| a | b |<br />| x | y |<br />| c | d |</p>",
         "diagnostics": [],
         "calls": []
       },
       "ast": {
         "status": "return",
         "value": [
-          {
-            "status": false,
-            "index": -1,
-            "value": null,
-            "furthest": 0,
-            "expected": [
-              "Not a valid table separator"
+          [
+            "p",
+            null,
+            [
+              "| a | b |",
+              [
+                "br",
+                null,
+                null
+              ],
+              [
+                "| x | y |",
+                [
+                  "br",
+                  null,
+                  null
+                ],
+                "| c | d |"
+              ]
             ]
-          }
+          ]
         ],
         "diagnostics": [],
         "calls": []

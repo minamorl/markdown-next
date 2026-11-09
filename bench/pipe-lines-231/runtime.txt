@@ -1,0 +1,4 @@
+command: node --version; pnpm --version
+v26.12.1
+10.33.4
+exit=0

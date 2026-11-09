@@ -8,7 +8,7 @@
     "example": "cd examples && webpack",
     "prepublish": "pnpm run build",
     "test": "pnpm run build && mocha lib/test && node --test test/readme.test.cjs test/security.test.cjs",
-    "test:characterization": "npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs && node bench/followup/security-golden.cjs && node bench/prepublish/verify-attributes.cjs",
+    "test:characterization": "npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs && node bench/followup/security-golden.cjs && node bench/prepublish/verify-attributes.cjs && node bench/prepublish/verify-pipe-lines.cjs",
     "characterization:freeze": "npm run build && node test/characterization/freeze.cjs",
     "bench": "npm run build && node bench/run.cjs",
     "bench:verify": "node bench/verify.cjs",
@@ -51,7 +51,7 @@
     "url": "https://github.com/minamorl/markdown-next/issues"
   },
   "homepage": "https://github.com/minamorl/markdown-next#readme",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

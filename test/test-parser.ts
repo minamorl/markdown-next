@@ -992,6 +992,34 @@ End.`
         // Malformed table should handle gracefully
         assert(result.length > 0)
       })
+
+      it('should keep 3 pipe-starting lines as a paragraph (2.3.1 regression)', () => {
+        const input = '| a | b |\n| c | d |\n| e | f |\n'
+        assert.equal(parse(input), '<p>| a | b |<br />| c | d |<br />| e | f |</p>')
+      })
+
+      it('should keep 4 pipe-starting lines as a paragraph (2.3.1 regression)', () => {
+        const input = '| a | b |\n| c | d |\n| e | f |\n| g | h |'
+        assert.equal(parse(input), '<p>| a | b |<br />| c | d |<br />| e | f |<br />| g | h |</p>')
+      })
+
+      it('should keep 3 single-column pipe lines as a paragraph (2.3.1 regression)', () => {
+        const input = '| a |\n| b |\n| c |'
+        assert.equal(parse(input), '<p>| a |<br />| b |<br />| c |</p>')
+      })
+
+      it('should keep 3 two-column pipe lines without separator as a paragraph (2.3.1 regression)', () => {
+        const input = '| a | b |\n| c | d |\n| e | f |'
+        assert.equal(parse(input), '<p>| a | b |<br />| c | d |<br />| e | f |</p>')
+      })
+
+      it('should keep math in a real table and in pipe paragraphs (2.3.1 regression)', () => {
+        assert.equal(
+          parse('| Formula | Result |\n| --- | --- |\n| $x^2$ | 4 |'),
+          '<table><tr><th>Formula</th><th>Result</th></tr><tr><td>$x^2$</td><td>4</td></tr></table>'
+        )
+        assert.equal(parse('| $x^2$ |\n| y |\n| z |'), '<p>| $x^2$ |<br />| y |<br />| z |</p>')
+      })
     })
 
     describe('Table comprehensive tests', () => {
