@@ -1,0 +1,5 @@
+command: node (in-memory golden mutation checks for verify-pipe-lines.cjs)
+unrelated HTML value: rejected with exit=1
+historical metadata: rejected with exit=1
+documented target mismatch: rejected with exit=1
+exit=0

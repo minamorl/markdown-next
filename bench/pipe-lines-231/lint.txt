@@ -1,0 +1,3 @@
+command: pnpm exec eslint bench/prepublish/verify-pipe-lines.cjs bench/prepublish/verify-attributes.cjs bench/followup/security-golden.cjs
+
+exit=0

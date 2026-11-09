@@ -1469,3 +1469,35 @@ Fresh raw: [prepublish benchmark](../bench/prepublish/benchmark.json), [journal]
 Measurement began (UTC): 2026-11-06T20:32:54.067Z; ended (UTC): 2026-11-06T20:36:08.594Z. measuredRevision: ef58ef35246ea8a39fca77d08b2d773c3b3fbde8; parserSha256: 9bcad9fba3db5b5fec2b2beb460585524c9a047c9d6bd391d1b7c6498a0abbb9. This revision is the local phase commit in the delivery bundle; subsequent commits contain evidence only. No cross-run causal performance claim is made.
 
 Final commands, exact output and exits are under [bench/prepublish](../bench/prepublish/README.md). Chromium input and real clipboard Ctrl+V evidence is in [browser.txt](../bench/prepublish/browser.txt), with [the sample screenshot](../bench/prepublish/sample.png). No external delivery or npm publish was performed.
+
+## 2.3.1 invalid table separator correction
+
+Code-first, no domain spec. `Scanner.table()` previously consumed a run of pipe-led
+lines and returned success with a failure object when the second line was not a
+valid separator. HTML rendered that object as `[object Object]`; AST exposed the
+`status: false` object. It now resets the cursor and returns false, allowing
+`paragraph()` to render all the lines. Valid tables retain their existing behavior.
+
+Only `table-invalid-separator` changes in the frozen golden, in its HTML and AST
+values. Its input is `| a | b |\n| x | y |\n| c | d |`. The corrected HTML is
+`<p>| a | b |<br />| x | y |<br />| c | d |</p>`; AST is the corresponding paragraph
+with line-break nodes. Statuses, diagnostics, plugin calls, metadata and the other
+286 entries remain unchanged. The complete old/new values are recorded in
+[pipe-line-changes.json](../bench/prepublish/pipe-line-changes.json).
+
+The original `f71fb55` capture froze a bug, rather than the published 2.2.3 behavior.
+The caller measured npm 2.2.3 returning the corrected paragraph for this input.
+Do not rerun `freeze.cjs`: its baseline-revision restriction is retained.
+[verify-pipe-lines.cjs](../bench/prepublish/verify-pipe-lines.cjs) checks the saved
+before/after against the hash-pinned historical scanner and current parser,
+restricts changes to values, and reconstructs the entire pre-migration golden
+SHA-256 `d1d8a973944253022d607f1d1a9e0448ac7518483ec37e44dad3684059184990`.
+It also checks every historical entry for `[object Object]` or `status:false`:
+only this entry matches. The historical security and attribute audits explicitly
+reverse this migration before their existing hash checks and separately validate
+its current outputs. All three audits run in `npm run test:characterization`.
+
+The caller's npm 2.2.3 comparison across 25 published articles found: 20 identical,
+3 differing only in preserved leading U+3000, 1 differing only in HTML attributes
+and U+3000, and 1 differing only in Markdown-code escaping. These are caller-provided
+measurements, not a new article comparison in this run. No npm publish is performed.

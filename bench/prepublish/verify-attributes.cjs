@@ -22,6 +22,12 @@ support._compile(fs.readFileSync(supportFile, 'utf8'), supportFile);
 const changes = read('bench/prepublish/attribute-changes.json');
 assert.deepStrictEqual(changes.map(row => row.id), ['html-attrs', 'html-mismatch']);
 const golden = read('test/characterization/golden.json');
+const pipeChanges = read('bench/prepublish/pipe-line-changes.json');
+for (const change of pipeChanges) {
+  const index = golden.entries.findIndex(row => row.id === change.id);
+  assert.deepStrictEqual(golden.entries[index], change.after);
+  golden.entries[index] = change.before;
+}
 for (const change of changes) {
   const index = golden.entries.findIndex(row => row.id === change.id);
   assert.deepStrictEqual(golden.entries[index], change.after);
@@ -34,7 +40,10 @@ for (const [index, fixture] of read('test/characterization/corpus.json').cases.e
   const before = { id: fixture.id }, after = { id: fixture.id };
   for (const mode of ['html', 'ast']) {
     before[mode] = support.exports.createRunner(fixture, mode)().outcome;
-    after[mode] = createRunner(fixture, mode)().outcome;
+    const pipeChange = pipeChanges.find(row => row.id === fixture.id);
+    const actual = createRunner(fixture, mode)().outcome;
+    if (pipeChange) assert.deepStrictEqual(actual, pipeChange.after[mode]);
+    after[mode] = pipeChange ? pipeChange.before[mode] : actual;
   }
   assert.deepStrictEqual(before, golden.entries[index], fixture.id + '/pinned baseline');
   if (!isDeepStrictEqual(before, after)) observedChanges.push({ id: fixture.id, input: fixture.input, before, after });
@@ -53,3 +62,4 @@ for (const left of fragments) for (const right of fragments) for (const prefix o
 console.log('Changed frozen inputs: ' + changes.map(row => row.id).join(', '));
 console.log(`${unchanged} frozen inputs unchanged; ${generated} generated attribute-free HTML/AST comparisons unchanged.`);
 console.log('Pinned pre-fix parser and full original golden hashes match; documented old/new values match actual parsers.');
+console.log('Historical attribute audit verified after reversing the separately audited pipe-line migration.');

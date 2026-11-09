@@ -1,0 +1,53 @@
+command: npm run test:characterization
+
+> @minamorl/markdown-next@2.3.0 test:characterization
+> npm run build && node test/characterization/run.cjs && node --test test/characterization/harness.test.cjs && node bench/followup/security-golden.cjs && node bench/prepublish/verify-attributes.cjs
+
+
+> @minamorl/markdown-next@2.3.0 build
+> tsc
+
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: table-invalid-separator/html
++ actual - expected
+
+  {
+    calls: [],
+    diagnostics: [],
+    status: 'return',
++   value: '<p>| a | b |<br />| x | y |<br />| c | d |</p>'
+-   value: '[object Object]'
+  }
+
+    at Object.<anonymous> (/home/minamorl/repos/.worktrees/markdown-next/fix-pipe-lines-231/test/characterization/run.cjs:12:12)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: {
+    status: 'return',
+    value: '<p>| a | b |<br />| x | y |<br />| c | d |</p>',
+    diagnostics: [],
+    calls: []
+  },
+  expected: {
+    status: 'return',
+    value: '[object Object]',
+    diagnostics: [],
+    calls: []
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.12.1
+
+exit=1
